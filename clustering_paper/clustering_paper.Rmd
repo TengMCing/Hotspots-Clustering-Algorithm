@@ -1,0 +1,244 @@
+---
+title: A clustering algorithm to organize satellite hotspots data for the purpose of tracking bushfires remotely
+author:
+  - name: Weihao Li
+    affiliation: Monash University
+    address:
+    - line 1
+    - line 2
+    email:  wlii0039@student.monash.edu
+  - name: Emily Dodwell
+    affiliation: AT&T
+    address:
+    - line 1
+    - line 2
+    email:  emily@research.att.com
+  - name: Dianne Cook
+    affiliation: Monash University
+    address:
+    - line 1
+    - line 2
+    email:  dicook@monash.edu
+abstract: >
+  An abstract of less than 150 words.
+preamble: |
+  % Any extra LaTeX you need in the preamble
+output: rticles::rjournal_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  cache=FALSE, 
+  message=FALSE, 
+  warning=FALSE, 
+  fig.retina = 3, 
+  out.width="80%")
+```
+
+```{r libraries}
+library(tidyverse)
+library(ggthemes)
+library(sf)
+library(ggpubr)
+library(rnaturalearth)
+library(lubridate)
+library(gridExtra)
+library(ggspatial)
+```
+
+## Introduction
+
+Bushfires are a major problem for Australia, and many other parts of the globe. There is concern that as the climate becomes hotter, and drier, that the impact of fires becomes much more severe and extensive. In Australia, the 2019-2020 fires were the worst on record causing extensive ecological damage, as well as damage to agricultural resources, properties and infrastructure. The Wollemi pine, rare prehistoric trees, required special forces intervention to prevent the last stands in the world, in remote wilderness areas, from being turned into ash. 
+
+Contributing to the problem is that many fires started in very remote areas, locations deep into the temperate forests ignited by lightning, that are virtually impossible to access or to monitor. Satellite data provides a possible solution to this, particularly remotely sensed hot spot data, which may be useful in detecting new ignitions and movements of fires. Understanding fires in remote areas using satellite data may provide some help in developing effective strategies for mitigating bushfire impact. 
+
+This work addresses this topic. Using hot spot data, can we cluster in space and time, in order to determine (1) points of ignition and (2) track the movement of bush fires. 
+
+This paper is organised as follows. The next section provides an introduction to the literature on spatiotemporal clustering and bush fire modeling and dynamics. Section [Algorithm] describes the clustering algorithm, and section [Application] illustrates how the resulting data can be used to study bush fire ignition. 
+
+<!--
+- What is the data, generic structure
+- Lit review: Spatio-temporal clustering. Algorithms for tracking movement.
+- Bushfire literature review?
+-->
+
+## Background
+
+### Spatiotemporal clustering
+
+### Bushfire modeling
+
+## Algorithm 
+
+### Data pre-processing
+
+<!--
+To track bushfires in Australia remotely, we used hotspots data taken from the Himawari-8 satellite. The hotspots data is available on the JAXA FTP site in CSV file format, and only the data during October 2019 to March 2020 was downloaded. It contains records of 1989572 hotspots for 5 months in the full disk of 140 \textdegree east longitude. We only kept records of hostpots within the boundary of Australia, which reduced to 1526080 records. Besides, a threshold (irradiance over 100 watts per square metre) for fire power was used to filter hotspots data, which can limit the influence of radiation from other objects. For the convention of this algorithm, a sequence of discrete timestamps was needed. We calculated the hourly difference between each record and the earliest record, then rounded them to integers. The end result was a 1010794 $\times$ 4 dataset. The four fields were the unique identifier for each row, the longitude, the latitude and the indicator of timestamps respectively. The code to implement this process is in "main.R". Read in CSV files was done by using package `readr`. Data manipulation was done by using package `dplyr`. High resolution Australia vector map was obtained from package `rnaturalearth`. Operation of geometric intersection between hotspots and Australia map was done by using package `sf`.
+-->
+
+
+
+ 
+
+```{r}
+au_map <- ne_states(country = 'Australia', returnclass = 'sf')
+vic_map <- au_map[7,]
+hotspots <- read_csv("resources/data/VIC_hotspots_raw.csv")
+memberships <- read_csv("resources/data/VIC_hotspots_after_clustering.csv")
+hotspots$fire_id <- memberships$fire_id
+rm(memberships)
+```
+
+```{r hotspots, fig.cap="Hotspot locations in Victoria during 2019-2020 season."}
+ggplot() +
+  geom_sf(data = vic_map) +
+  geom_point(data = hotspots[sample(1:nrow(hotspots), 5000),], aes(lon, lat), alpha = 0.3) +
+  theme_map()
+```
+
+### Steps
+
+This algorithm runs in a temporal manner. Starting from the first hour of the first day or the bushfire season, hotspots are grouped, and then agglomerated spatially. This proceeds to the next hour. 
+
+
+**1. Divide hotspots by hour**
+
+<center> <em> Show faceted plots of hotspot data (from full map) for first five hours, all in one row of plots </em> </center>
+
+Hour is used as the basic unit of time, to simplify the computation, but it could be a different time resolution.
+
+**2. Start from the first hour**
+
+<center> <em> Plot of one hour, small area, so we can show how the algorithm does grouping </em> </center>
+
+It first selected entries of the first timestamps, which was the first hour in the hotspots data.
+
+**3. Connect adjacent hotspots and <u>active</u> centroids (3km)**
+
+<center> <em> Show connection of points from previous plot </em> </center>
+
+ The algorithm then calculated the matrix of pairwise geodesic distances between all points being selected. With the geodesic distances matrix, an "adjacent distance" as one of the hyperparameters in this algorithm was used to determine the adjacency matrix. If a geodesic distance between two points was less than the "adjacent distance", the corresponding entry in the adjacency matrix would be assigned with integer 1, otherwise it would be assigned with integer 0. Normally, this "adjacent distance" would be set between 0 to 100000 meters. Using the adjacency matrix, the algorithm then constructed a undirected unweighted graph. For each connected component in this graph, a unique integer was assigned as the membership. In our hotspots data, components could be recognised as bushfires. Points in the same component shared with the same membership.
+ 
+**4. For each point, if there is a <u>connected</u> <u>nearest</u> <u>active</u> centroid, join its group**
+
+Meanwhile, the longitude and the latitude of centroids in each component were calculated by taking the average of longitude and the average of latitude for all points in the corresponding component. Those centroids along with memberships would then be recorded and labelled as active groups. In other words, their "active" attributes were assigned with integer 0. 
+
+**5. Otherwise, create a new group for each <u>connected</u> graph**
+
+<center> <em> Show grouped observations </em> </center>
+
+**6. Compute centroid for each group**
+
+<center> <em> Show centroids </em> </center>
+
+**7. Keep the group active until there is no new hotspots join the group within 24 hours**
+
+When the algorithm moved to the next timestamps, it subtracted 1 from "active" attributes. Another hyperparameter "group active time" was used for selecting active groups. Conventionally, "group active time" was set to be 24 hours. If any centroid had an "active" attribute greater than the negative of "group active time", it would be selected as active groups. 
+
+For the second and the later timestamps, the algorithm first combined centroids of active groups with the hotspots data in the corresponding timestamps. It then calculated geodesic distances matrix, filled adjacency matrix and constructed graph as before. There was an additional step which was to find the nearest active group within the same component for each point. If a point shared the same component with active groups, it would be assigned with the membership of the nearest active group. Otherwise, points shared with the same component would be assigned with a new membership. Therefore, points in one component would not necessary had the same membership if there were more than one active groups within a component. All centroids of active groups and new group would then be recalculated and updated using only the current timestamps hotspots data. Their "active" attributes were set to be 0.
+
+This algorithm worked till the last timestamps. The end result was a vector of memberships with length equal to number of rows in hotspots data and a time-series record of all groups. 
+
+For computational performance, we stored the hostpots data in a SQLite database. Relevant operation was done by using packages `DBI` and `RSQLite`. Geodesic distances matrix was calculated using package `geodist`. Graph operation was done by using package `igraph`.
+
+**8. Repeat this process to the last hour**
+
+The code implemented this algorithm is "clustering.R".
+
+<!--(Code in clustering.R does this, needs cleaning up)-->
+
+
+
+
+### Effects of parameter choices
+
+There are two parameters that can be tuned in this algorithm. They are `adj_dist`, which is the density distance and `active_time`, which is the .
+
+```{r para_1, fig.cap="Number of clusters under different parameter choices", fig.height= 8}
+para_grid <- read_csv("resources/data/clustering_grid.csv")
+p1 <- ggplot(filter(para_grid, adj_dist > 2000, active_time == 24)) +
+  geom_line(aes(adj_dist, count, col = factor(active_time))) +
+  xlab("Parameter: adj_dist") +
+  ylab("Number of clusters") +
+  labs(col = "Parameter: active_time") +
+  scale_x_continuous(breaks = seq(1000,10000,1000)) +
+  theme(legend.position = "bottom")
+
+p2 <- ggplot(para_grid) +
+  geom_line(aes(active_time, count, col = factor(adj_dist))) +
+  xlab("Parameter: active_time") +
+  ylab("Number of clusters") +
+  labs(col = "Parameter: adj_dist") +
+  scale_x_continuous(breaks = seq(3,36,3)) +
+  theme(legend.position = "bottom")
+
+grid.arrange(p1, p2, ncol = 1)
+```
+
+## Application
+
+### Determining the ignition point and time for individual fires
+
+<center> <em> Show ignition points for a particularly heavy day and another for a particularly light day </em> </center>
+
+```{r}
+hotspots %>%
+  group_by(fire_id) %>%
+  summarise(hour_id = min(hour_id)) %>%
+  ungroup() -> temp
+
+ignition <- left_join(temp, hotspots) %>%
+  group_by(fire_id) %>%
+  summarise(time = mean(`#obstime`), lon = mean(lon), lat = mean(lat))
+
+ggplot(ignition) +
+  geom_sf(data = vic_map) +
+  geom_point(aes(lon, lat))
+  
+```
+
+```{r}
+ignition <- mutate(ignition, year = year(time), month = month(time), day = day(time))
+```
+
+```{r}
+# light
+filter(ignition, year == 2020, month == 1, day == 24) %>%
+ggplot() +
+  geom_sf(data = vic_map) +
+  geom_point(aes(lon, lat)) +
+  ggtitle("2020.01.24")
+```
+```{r}
+# heavy
+filter(ignition, year == 2019, month == 12, day == 18) %>%
+ggplot() +
+  geom_sf(data = vic_map) +
+  geom_point(aes(lon, lat)) +
+  ggtitle("2019.12.18")
+```
+
+
+### Tracking fire movement
+
+<center> <em> Display showing how a fire moves over time, maybe two or more fires </em> </center>
+
+### Allocating resources for future fire prevention
+
+Merging data with camp sites, CFA, roads, ... 
+
+## Summary
+
+
+<!--
+This file is only a basic article template. For full details of _The R Journal_ style and information on how to prepare your article for submission, see the [Instructions for Authors](https://journal.r-project.org/share/author-guide.pdf).
+-->
+
+## Acknowledgements
+
+- The code and files to reproduce this work are at XXX
+- Data on hotspots can be downloaded from XXX
+
+
+\bibliography{RJreferences}
