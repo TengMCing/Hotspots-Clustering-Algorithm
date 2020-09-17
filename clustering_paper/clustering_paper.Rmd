@@ -157,21 +157,23 @@ There are two parameters that can be tuned in this algorithm. They are `adj_dist
 
 ```{r para_1, fig.cap="Number of clusters under different parameter choices", fig.height= 8}
 para_grid <- read_csv("resources/data/clustering_grid.csv")
-p1 <- ggplot(filter(para_grid, adj_dist > 2000, active_time == 24)) +
+p1 <- ggplot(filter(para_grid)) +
   geom_line(aes(adj_dist, count, col = factor(active_time))) +
   xlab("Parameter: adj_dist") +
   ylab("Number of clusters") +
   labs(col = "Parameter: active_time") +
   scale_x_continuous(breaks = seq(1000,10000,1000)) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  ylim(0, NA)
 
-p2 <- ggplot(para_grid) +
+p2 <- ggplot(filter(para_grid, adj_dist > 2000)) +
   geom_line(aes(active_time, count, col = factor(adj_dist))) +
   xlab("Parameter: active_time") +
   ylab("Number of clusters") +
   labs(col = "Parameter: adj_dist") +
   scale_x_continuous(breaks = seq(3,36,3)) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  ylim(0, NA)
 
 grid.arrange(p1, p2, ncol = 1)
 ```
