@@ -44,8 +44,25 @@ library(ggpubr)
 library(rnaturalearth)
 library(lubridate)
 library(gridExtra)
-library(ggspatial)
 ```
+
+```{r Run-Algorithm, include = FALSE}
+if (any(!file.exists(c("data/VIC_hotspots_before_clustering.csv", 
+                       "data/VIC_hotspots_raw.csv")))){
+  system("Rscript scripts/Clustering-Python-setup.R")
+} 
+
+if (!file.exists("data/clustering_grid.csv")){
+  system("python scripts/clustering_tune.py")
+} 
+
+system("Rscript scripts/clustering_tune_vis.R")
+
+if (!file.exists("data/VIC_hotspots_after_clustering.csv")){
+  system("python scripts/main.py")
+}
+```
+
 
 ## Introduction
 
@@ -155,28 +172,7 @@ The code implemented this algorithm is "clustering.R".
 
 There are two parameters that can be tuned in this algorithm. They are `adj_dist`, which is the density distance and `active_time`, which is the .
 
-```{r para_1, fig.cap="Number of clusters under different parameter choices", fig.height= 8}
-para_grid <- read_csv("resources/data/clustering_grid.csv")
-p1 <- ggplot(filter(para_grid)) +
-  geom_line(aes(adj_dist, count, col = factor(active_time))) +
-  xlab("Parameter: adj_dist") +
-  ylab("Number of clusters") +
-  labs(col = "Parameter: active_time") +
-  scale_x_continuous(breaks = seq(1000,10000,1000)) +
-  theme(legend.position = "bottom") +
-  ylim(0, NA)
 
-p2 <- ggplot(filter(para_grid, adj_dist > 2000)) +
-  geom_line(aes(active_time, count, col = factor(adj_dist))) +
-  xlab("Parameter: active_time") +
-  ylab("Number of clusters") +
-  labs(col = "Parameter: adj_dist") +
-  scale_x_continuous(breaks = seq(3,36,3)) +
-  theme(legend.position = "bottom") +
-  ylim(0, NA)
-
-grid.arrange(p1, p2, ncol = 1)
-```
 
 ## Application
 

@@ -1,0 +1,12 @@
+Summary of the Clustering Result
+Time
+	Read Data:  0.44235944747924805 
+	Run Algorithm:  381.5072727203369 
+	Finish:  0.1911468505859375 
+Setting
+	active_time:  24 
+	adj_dist:  3000 
+Result
+	Number of Observations:  75936 
+	Number of Clusters:  1022 
+	Length of Time:  4313 
