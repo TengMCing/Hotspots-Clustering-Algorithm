@@ -22,7 +22,7 @@ author:
 abstract: >
   An abstract of less than 150 words.
 preamble: |
-  % Any extra LaTeX you need in the preamble
+  \newtheorem{defn}{Definition}
 output: rticles::rjournal_article
 ---
 
@@ -56,7 +56,10 @@ if (!file.exists("data/clustering_grid.csv")){
   system("python scripts/clustering_tune.py")
 } 
 
-system("Rscript scripts/clustering_tune_vis.R")
+if (any(!file.exists(c("figures/clustering_tuning_1.jpeg", 
+                       "figures/clustering_tuning_2.jpeg")))){
+  system("Rscript scripts/clustering_tune_vis.R")
+}
 
 if (!file.exists("data/VIC_hotspots_after_clustering.csv")){
   system("python scripts/main.py")
@@ -101,8 +104,8 @@ To track bushfires in Australia remotely, we used hotspots data taken from the H
 ```{r}
 au_map <- ne_states(country = 'Australia', returnclass = 'sf')
 vic_map <- au_map[7,]
-hotspots <- read_csv("resources/data/VIC_hotspots_raw.csv")
-memberships <- read_csv("resources/data/VIC_hotspots_after_clustering.csv")
+hotspots <- read_csv("data/VIC_hotspots_raw.csv")
+memberships <- read_csv("data/VIC_hotspots_after_clustering.csv")
 hotspots$fire_id <- memberships$fire_id
 rm(memberships)
 ```
@@ -118,6 +121,44 @@ ggplot() +
 
 This algorithm runs in a temporal manner. Starting from the first hour of the first day or the bushfire season, hotspots are grouped, and then agglomerated spatially. This proceeds to the next hour. 
 
+**1. Divide hotspots by hour**
+
+Hostpots will first be divided into hours as shown in Figure \ref{fig:step1}. Notice the unit of time is an arbitrary choice. Theoretically, it can be replaced with any other units not larger than the total length of time and not less than the temporal resolution of the data. It depends on 
+
+```{r step1, fig.cap="Hotspots in the first 3 hours."}
+ggplot(filter(hotspots, hour_id <= 5)) +
+  geom_sf(data = vic_map) +
+  geom_point(aes(lon, lat), position = "jitter") +
+  facet_wrap(~hour_id) -> p1
+
+ggplot(filter(hotspots, hour_id <= 5)) +
+  geom_point(aes(lon, lat), position = "jitter") +
+  facet_wrap(~hour_id) -> p2
+
+grid.arrange(p1,p2)
+  
+```
+
+**2. Start from the first hour**
+
+Hotspots in the first hour will be filtered out from the data.
+
+```{r}
+ggplot(filter(hotspots, hour_id == 1)) +
+  geom_point(aes(lon, lat), position = "jitter")
+```
+
+**3. Connect reachable hotspots**
+
+We try to formalize the meaning of "cluster" to better illustrate the connection between 
+
+
+\begin{defn}[directly reachable] A point p is directly reachable from a point q with respect to AdjDist, if the distance between point p and q is less or equal to AdjDist\end{defn}
+
+\begin{defn}[reachable] A point p is reachable from a point q with respect to AdjDist, if there is a chain of points $p_1$, $p_2$, ..., $p_n$, $p_1 = p$, $P_n = q$ such that $P_n$ is directly reachable from $p_{n-1}$ \end{defn}
+
+
+<!--
 
 **1. Divide hotspots by hour**
 
@@ -161,9 +202,15 @@ For computational performance, we stored the hostpots data in a SQLite database.
 
 **8. Repeat this process to the last hour**
 
-The code implemented this algorithm is "clustering.R".
+The code implemented this algorithm is "clustering.R". 
+
+-->
+
+
 
 <!--(Code in clustering.R does this, needs cleaning up)-->
+
+
 
 
 

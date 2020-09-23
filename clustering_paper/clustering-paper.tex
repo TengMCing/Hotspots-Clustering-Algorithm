@@ -74,93 +74,34 @@ agglomerated spatially. This proceeds to the next hour.
 
 \textbf{1. Divide hotspots by hour}
 
-Show faceted plots of hotspot data (from full map) for first five hours,
-all in one row of plots
+Hostpots will first be divided into hours as shown in Figure
+\ref{fig:step1}. Notice the unit of time is an arbitrary choice.
+Theoretically, it can be replaced with any other units not larger than
+the total length of time and not less than the temporal resolution of
+the data. It depends on
 
-Hour is used as the basic unit of time, to simplify the computation, but
-it could be a different time resolution.
+\begin{Schunk}
+\begin{figure}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step1-1} \caption[Hotspots in the first 3 hours]{Hotspots in the first 3 hours.}\label{fig:step1}
+\end{figure}
+\end{Schunk}
 
 \textbf{2. Start from the first hour}
 
-Plot of one hour, small area, so we can show how the algorithm does
-grouping
+Hotspots in the first hour will be filtered out from the data.
 
-It first selected entries of the first timestamps, which was the first
-hour in the hotspots data.
+\begin{Schunk}
 
-\textbf{3. Connect adjacent hotspots and active centroids (3km)}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-2-1} \end{Schunk}
 
-Show connection of points from previous plot
+\textbf{3. Connect reachable hotspots}
 
-The algorithm then calculated the matrix of pairwise geodesic distances
-between all points being selected. With the geodesic distances matrix,
-an ``adjacent distance'' as one of the hyperparameters in this algorithm
-was used to determine the adjacency matrix. If a geodesic distance
-between two points was less than the ``adjacent distance'', the
-corresponding entry in the adjacency matrix would be assigned with
-integer 1, otherwise it would be assigned with integer 0. Normally, this
-``adjacent distance'' would be set between 0 to 100000 meters. Using the
-adjacency matrix, the algorithm then constructed a undirected unweighted
-graph. For each connected component in this graph, a unique integer was
-assigned as the membership. In our hotspots data, components could be
-recognised as bushfires. Points in the same component shared with the
-same membership.
+We try to formalize the meaning of ``cluster'' to better illustrate the
+connection between
 
-\textbf{4. For each point, if there is a connected nearest active
-centroid, join its group}
+\begin{defn}[directly reachable] A point p is directly reachable from a point q with respect to AdjDist, if the distance between point p and q is less or equal to AdjDist\end{defn}
 
-Meanwhile, the longitude and the latitude of centroids in each component
-were calculated by taking the average of longitude and the average of
-latitude for all points in the corresponding component. Those centroids
-along with memberships would then be recorded and labelled as active
-groups. In other words, their ``active'' attributes were assigned with
-integer 0.
-
-\textbf{5. Otherwise, create a new group for each connected graph}
-
-Show grouped observations
-
-\textbf{6. Compute centroid for each group}
-
-Show centroids
-
-\textbf{7. Keep the group active until there is no new hotspots join the
-group within 24 hours}
-
-When the algorithm moved to the next timestamps, it subtracted 1 from
-``active'' attributes. Another hyperparameter ``group active time'' was
-used for selecting active groups. Conventionally, ``group active time''
-was set to be 24 hours. If any centroid had an ``active'' attribute
-greater than the negative of ``group active time'', it would be selected
-as active groups.
-
-For the second and the later timestamps, the algorithm first combined
-centroids of active groups with the hotspots data in the corresponding
-timestamps. It then calculated geodesic distances matrix, filled
-adjacency matrix and constructed graph as before. There was an
-additional step which was to find the nearest active group within the
-same component for each point. If a point shared the same component with
-active groups, it would be assigned with the membership of the nearest
-active group. Otherwise, points shared with the same component would be
-assigned with a new membership. Therefore, points in one component would
-not necessary had the same membership if there were more than one active
-groups within a component. All centroids of active groups and new group
-would then be recalculated and updated using only the current timestamps
-hotspots data. Their ``active'' attributes were set to be 0.
-
-This algorithm worked till the last timestamps. The end result was a
-vector of memberships with length equal to number of rows in hotspots
-data and a time-series record of all groups.
-
-For computational performance, we stored the hostpots data in a SQLite
-database. Relevant operation was done by using packages \texttt{DBI} and
-\texttt{RSQLite}. Geodesic distances matrix was calculated using package
-\texttt{geodist}. Graph operation was done by using package
-\texttt{igraph}.
-
-\textbf{8. Repeat this process to the last hour}
-
-The code implemented this algorithm is ``clustering.R''.
+\begin{defn}[reachable] A point p is reachable from a point q with respect to AdjDist, if there is a chain of points $p_1$, $p_2$, ..., $p_n$, $p_1 = p$, $P_n = q$ such that $P_n$ is directly reachable from $p_{n-1}$ \end{defn}
 
 \hypertarget{effects-of-parameter-choices}{%
 \subsubsection{Effects of parameter
@@ -169,12 +110,6 @@ choices}\label{effects-of-parameter-choices}}
 There are two parameters that can be tuned in this algorithm. They are
 \texttt{adj\_dist}, which is the density distance and
 \texttt{active\_time}, which is the .
-
-\begin{Schunk}
-\begin{figure}
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/para_1-1} \caption[Number of clusters under different parameter choices]{Number of clusters under different parameter choices}\label{fig:para_1}
-\end{figure}
-\end{Schunk}
 
 \hypertarget{application}{%
 \subsection{Application}\label{application}}
@@ -188,15 +123,15 @@ particularly light day
 
 \begin{Schunk}
 
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-2-1} \end{Schunk}
-
-\begin{Schunk}
-
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-4-1} \end{Schunk}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-3-1} \end{Schunk}
 
 \begin{Schunk}
 
 \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-5-1} \end{Schunk}
+
+\begin{Schunk}
+
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-6-1} \end{Schunk}
 
 \hypertarget{tracking-fire-movement}{%
 \subsubsection{Tracking fire movement}\label{tracking-fire-movement}}
