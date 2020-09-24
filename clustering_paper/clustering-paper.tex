@@ -74,60 +74,138 @@ agglomerated spatially. This proceeds to the next hour.
 
 \textbf{1. Divide hotspots by hour}
 
-Hotspots will first be divided into hours as shown in Figure
+The algorithm starts by dividing hotspots into subgroups given their
+hours since the first observed hotspot as shown in Figure
 \ref{fig:step1}. Notice the unit of time is an arbitrary choice.
 Theoretically, it can be replaced with any other units not larger than
 the total length of time and not less than the temporal resolution of
-the data. We use one hour as the unit of time because our temporal
-resolution is 10 minutes and hotspots usually last more than 12 hours.
-Treating hotspots within an hour as a whole is logically reasonable.
+the data. Normally, the algorithm will be sensitive to noises and
+unobserved hotspots if a small unit of time is used while losing details
+of bushfires movement if a large unit of time is used.
+
+One hour is chosen to be the default unit of time because the temporal
+resolution of our data is 10 minutes. Besides, since bushfires usually
+last longer than 12 hours, treating hotspots within an hour as a whole
+is reasonable.
 
 \begin{Schunk}
 \begin{figure}
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step1-1} \caption[Hotspots in the first 3 hours]{Hotspots in the first 3 hours.}\label{fig:step1}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step1-1} \caption[Step 1]{Step 1. Hotspots in the first 3 hours of the bushfire season.}\label{fig:step1}
 \end{figure}
 \end{Schunk}
 
 \textbf{2. Start from the first hour}
 
-Hotspots in the first hour will be filtered out from the data as shown
-in Figure \ref{fig:step2}.
+The algorithm first selecting the hotspots in the first hour as shown in
+Figure \ref{fig:step2}.
 
 \begin{Schunk}
 \begin{figure}
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step2-1} \caption[Hotspots in the first hour]{Hotspots in the first hour.}\label{fig:step2}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step2-1} \caption[Step 2]{Step 2. Hotspots in the first hour.}\label{fig:step2}
 \end{figure}
 \end{Schunk}
 
 \textbf{3. Connect reachable hotspots}
 
-\begin{Schunk}
-\begin{figure}
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step3-1} \caption[All reachable hotspots in the firs hour are connected]{All reachable hotspots in the firs hour are connected.}\label{fig:step3}
-\end{figure}
-\end{Schunk}
-
 We try to formalize the meaning of ``cluster'' to better illustrate the
 connection between this algorithm and the underlying bushfire behaviour.
-When bushfires spread due to wind and fuel, the satellite will record a
-series of hotspots along its trajectory. Thus, if two hotspots are close
-to each other within a certain distance in a short period of time, they
-could be considered as a single bushfire.
+When bushfires spread over time, the satellite will record a series of
+hotspots along its trajectory. Thus, if two hotspots are close to each
+other within a certain distance in a short period of time, they could be
+considered as a single bushfire.
 
-\begin{defn}[directly reachable] A point p is directly reachable from a point q with respect to AdjDist, if the distance between point p and q is less or equal to AdjDist\end{defn}
+\begin{defn}[directly reachable] A point p is directly reachable from a point q with respect to AdjDist, if the distance between point p and q is less or equal to AdjDist.\end{defn}
 
-\begin{defn}[reachable] A point p is reachable from a point q with respect to AdjDist, if there is a chain of points $p_1$, $p_2$, ..., $p_n$, $p_1 = p$, $P_n = q$ such that $P_n$ is directly reachable from $p_{n-1}$ \end{defn}
+\begin{defn}[reachable] A point p is reachable from a point q with respect to AdjDist, if there is a chain of points $p_1$, $p_2$, ..., $p_n$, $p_1 = p$, $P_n = q$ such that $P_n$ is directly reachable from $p_{n-1}$. \end{defn}
 
-In this step, the algorithm will connect all reachable hotspots from all
-hotspots in the first hour.
+In this step, the algorithm connects all pairs of directly reachable
+hotspots with respect to \(AdjDist = 3000m\) in the first hour as shown
+in Figure \ref{fig:step3}. The result of this step is an undirected and
+unweighted graph. \(AdjDist\) is the first parameter used in this
+algorithm which controls the connectivity between hotspots. It is
+introduced for the purpose of parameterizing the speed of bushfires.
+
+\begin{Schunk}
+\begin{figure}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step3-1} \caption[Step 3]{Step 3. All pairs of directly reachable hotspots in the first hour are connected given the AdjDist is 3000 metres. There is only one component in the graph}\label{fig:step3}
+\end{figure}
+\end{Schunk}
 
 \textbf{4. Assign memberships to hotspots}
 
+The algorithm then clusters hotspots into groups based on the
+connectivity between hotspots as shown in Figure \ref{fig:step4}.
+Different memberships will be assigned to vertices in different
+components. Thus, if two hotspots are reachable from each other, they
+will be assigned the same membership. In the first hour, because all
+hotspots are reachable from other hotspots, they are assigned the same
+membership.
+
 \begin{Schunk}
 \begin{figure}
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step4-1} \caption[123]{123}\label{fig:step4}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step4-1} \caption[Step 4]{Step 4. All hotspots in the first hour are reachable from each other. They are assigned the same membership.}\label{fig:step4}
 \end{figure}
 \end{Schunk}
+
+\textbf{5. Move to the second hour or beyond}
+
+We need to introduce the second parameter used in this algorithm, which
+is ActiveTime. This parameter controls the time frame of hotspots that
+will be included by the algorithm in each iteration. More specifically,
+this time frame is defined as \([max(t-ActiveTime,1),t]\), where \(t\)
+is the current timestamp of the algorithm. For instance, if
+\(ActiveTime = 24\) and the algorithm is clustering the hotspots in the
+36th hour, then the time frame will be \([12,36]\).
+
+We define this time frame for the purpose of associating the hotspots in
+the current timestamp with hotspots observed in previous hours. By
+imposing this time frame, we provide an invariant task at each
+iteration, which is clustering hotspots in the current hour given the
+clustered hotspots in previous hours.
+
+Move to the hour \(t\), the algorithm will select hotspots in hour
+between \(max(t-ActiveTime,1)\) and \(t\), including
+\(max(t-ActiveTime,1)\) and \(t\). Given \(t = 2\) and
+\(ActiveTime = 24\), the hotspots in the first two hours will be
+selected as shown in Figure \ref{fig:step5}.
+
+\begin{Schunk}
+\begin{figure}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step5-1} \caption[Step 5]{Step 5. Hotspots in the first two hours. Due to overlapping, hotspots in the second hour are adjusted by 0.005 degree in longitude.}\label{fig:step5}
+\end{figure}
+\end{Schunk}
+
+\textbf{6. Connect reachable hotspots}
+
+This step is equivalent to step 3 and is only used for illustration
+purpose. Given the hotspots in the first two hours, the algorithm
+connects all pairs of reachable points as shown in Figure
+\ref{fig:step6}.
+
+\begin{Schunk}
+\begin{figure}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step6-1} \caption[Step 6]{Step 6. All pairs of directly reachable hotspots in the first two hours are connected given the AdjDist is 3000 metres. There are two components in the graph.}\label{fig:step6}
+\end{figure}
+\end{Schunk}
+
+\textbf{7. Find the nearest hotspot in the previous hours within the
+same component for each hotspots in the current timestamp}
+
+According to the result from step 6, the algorithm will then find the
+nearest hotspot in the previous hours within the same component for each
+hotspots in the current timestamp which is the second hour as shown in
+Figure \ref{fig:step7}. This step along with step 8 is to solve the
+problem when a hotspot in the current timestamp share the same component
+with multiple hotspots in the previous hours. And, we need to decide
+which membership in the previous hours it should inherit.
+
+\begin{Schunk}
+\begin{figure}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step7-1} \caption[Step 7]{Step 7. Hotspots in the second hour is connected with its nearest hotspot in the first hour within the same component. Due to overlapping, hotspots in the second hour are adjusted by 0.005 degree in longitude.}\label{fig:step7}
+\end{figure}
+\end{Schunk}
+
+\textbf{8: Assign membership to hotspots in the current timestamp}
 
 \hypertarget{effects-of-parameter-choices}{%
 \subsubsection{Effects of parameter
