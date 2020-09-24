@@ -65,6 +65,10 @@ if (any(!file.exists(c("figures/clustering_tuning_1.jpeg",
 if (!file.exists("data/VIC_hotspots_after_clustering.csv")){
   system("python scripts/main.py")
 }
+
+if (!file.exists("figures/fire_mov.jpeg")){
+  system("Rscript scripts/FireMov.R")
+}
 ```
 
 
