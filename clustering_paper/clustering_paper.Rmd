@@ -123,16 +123,17 @@ This algorithm runs in a temporal manner. Starting from the first hour of the fi
 
 **1. Divide hotspots by hour**
 
-Hostpots will first be divided into hours as shown in Figure \ref{fig:step1}. Notice the unit of time is an arbitrary choice. Theoretically, it can be replaced with any other units not larger than the total length of time and not less than the temporal resolution of the data. It depends on 
+Hotspots will first be divided into hours as shown in Figure \ref{fig:step1}. Notice the unit of time is an arbitrary choice. Theoretically, it can be replaced with any other units not larger than the total length of time and not less than the temporal resolution of the data. We use one hour as the unit of time because our temporal resolution is 10 minutes and hotspots usually last more than 12 hours. Treating hotspots within an hour as a whole is logically reasonable.
 
 ```{r step1, fig.cap="Hotspots in the first 3 hours."}
+
 ggplot(filter(hotspots, hour_id <= 5)) +
   geom_sf(data = vic_map) +
-  geom_point(aes(lon, lat), position = "jitter") +
+  geom_point(aes(lon, lat)) +
   facet_wrap(~hour_id) -> p1
 
 ggplot(filter(hotspots, hour_id <= 5)) +
-  geom_point(aes(lon, lat), position = "jitter") +
+  geom_point(aes(lon, lat)) +
   facet_wrap(~hour_id) -> p2
 
 grid.arrange(p1,p2)
@@ -141,21 +142,67 @@ grid.arrange(p1,p2)
 
 **2. Start from the first hour**
 
-Hotspots in the first hour will be filtered out from the data.
+Hotspots in the first hour will be filtered out from the data as shown in Figure \ref{fig:step2}.
 
-```{r}
+```{r step2, fig.cap = "Hotspots in the first hour."}
 ggplot(filter(hotspots, hour_id == 1)) +
-  geom_point(aes(lon, lat), position = "jitter")
+  geom_point(aes(lon, lat))
 ```
 
 **3. Connect reachable hotspots**
 
-We try to formalize the meaning of "cluster" to better illustrate the connection between 
+```{r step3, fig.cap="All reachable hotspots in the firs hour are connected."}
+first_hotspots <- filter(hotspots, hour_id == 1)
 
+adjmatrix <- first_hotspots %>%
+  select(lon, lat) %>%
+  geodist::geodist()<=3000
+
+segment_data <- NULL
+
+for (i in 1:dim(adjmatrix)[1]){
+  temp_data <- data.frame(x = first_hotspots$lon[i], 
+                               y = first_hotspots$lat[i], 
+                               xend = first_hotspots$lon[which(adjmatrix[i,])], 
+                               yend = first_hotspots$lat[which(adjmatrix[i,])])
+  if (is.null(segment_data)){
+    segment_data <- temp_data
+  } else {
+    segment_data <- bind_rows(segment_data, temp_data)
+  }
+}
+
+
+ggplot(first_hotspots) +
+  geom_segment(data = segment_data, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_point(aes(lon, lat), col = "red", size = 2) +
+  xlab("lon") +
+  ylab("lat")
+  
+```
+
+
+We try to formalize the meaning of "cluster" to better illustrate the connection between this algorithm and the underlying bushfire behaviour. When bushfires spread due to wind and fuel, the satellite will record a series of hotspots along its trajectory. Thus, if two hotspots are close to each other within a certain distance in a short period of time, they could be considered as a single bushfire.
 
 \begin{defn}[directly reachable] A point p is directly reachable from a point q with respect to AdjDist, if the distance between point p and q is less or equal to AdjDist\end{defn}
 
 \begin{defn}[reachable] A point p is reachable from a point q with respect to AdjDist, if there is a chain of points $p_1$, $p_2$, ..., $p_n$, $p_1 = p$, $P_n = q$ such that $P_n$ is directly reachable from $p_{n-1}$ \end{defn}
+
+In this step, the algorithm will connect all reachable hotspots from all hotspots in the first hour.
+
+**4. Assign memberships to hotspots**
+
+```{r step4, fig.cap="123"}
+ggplot(first_hotspots) +
+  geom_segment(data = segment_data, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_point(aes(lon, lat), col = "red", size = 2) +
+  geom_text(aes(lon, lat), label = "1", nudge_x= 0.002, nudge_y = 0.002) +
+  xlab("lon") +
+  ylab("lat")
+
+```
+
+
 
 
 <!--

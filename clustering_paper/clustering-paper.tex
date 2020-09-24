@@ -74,11 +74,13 @@ agglomerated spatially. This proceeds to the next hour.
 
 \textbf{1. Divide hotspots by hour}
 
-Hostpots will first be divided into hours as shown in Figure
+Hotspots will first be divided into hours as shown in Figure
 \ref{fig:step1}. Notice the unit of time is an arbitrary choice.
 Theoretically, it can be replaced with any other units not larger than
 the total length of time and not less than the temporal resolution of
-the data. It depends on
+the data. We use one hour as the unit of time because our temporal
+resolution is 10 minutes and hotspots usually last more than 12 hours.
+Treating hotspots within an hour as a whole is logically reasonable.
 
 \begin{Schunk}
 \begin{figure}
@@ -88,20 +90,44 @@ the data. It depends on
 
 \textbf{2. Start from the first hour}
 
-Hotspots in the first hour will be filtered out from the data.
+Hotspots in the first hour will be filtered out from the data as shown
+in Figure \ref{fig:step2}.
 
 \begin{Schunk}
-
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-2-1} \end{Schunk}
+\begin{figure}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step2-1} \caption[Hotspots in the first hour]{Hotspots in the first hour.}\label{fig:step2}
+\end{figure}
+\end{Schunk}
 
 \textbf{3. Connect reachable hotspots}
 
+\begin{Schunk}
+\begin{figure}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step3-1} \caption[All reachable hotspots in the firs hour are connected]{All reachable hotspots in the firs hour are connected.}\label{fig:step3}
+\end{figure}
+\end{Schunk}
+
 We try to formalize the meaning of ``cluster'' to better illustrate the
-connection between
+connection between this algorithm and the underlying bushfire behaviour.
+When bushfires spread due to wind and fuel, the satellite will record a
+series of hotspots along its trajectory. Thus, if two hotspots are close
+to each other within a certain distance in a short period of time, they
+could be considered as a single bushfire.
 
 \begin{defn}[directly reachable] A point p is directly reachable from a point q with respect to AdjDist, if the distance between point p and q is less or equal to AdjDist\end{defn}
 
 \begin{defn}[reachable] A point p is reachable from a point q with respect to AdjDist, if there is a chain of points $p_1$, $p_2$, ..., $p_n$, $p_1 = p$, $P_n = q$ such that $P_n$ is directly reachable from $p_{n-1}$ \end{defn}
+
+In this step, the algorithm will connect all reachable hotspots from all
+hotspots in the first hour.
+
+\textbf{4. Assign memberships to hotspots}
+
+\begin{Schunk}
+\begin{figure}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/step4-1} \caption[123]{123}\label{fig:step4}
+\end{figure}
+\end{Schunk}
 
 \hypertarget{effects-of-parameter-choices}{%
 \subsubsection{Effects of parameter
@@ -123,15 +149,15 @@ particularly light day
 
 \begin{Schunk}
 
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-3-1} \end{Schunk}
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-2-1} \end{Schunk}
+
+\begin{Schunk}
+
+\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-4-1} \end{Schunk}
 
 \begin{Schunk}
 
 \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-5-1} \end{Schunk}
-
-\begin{Schunk}
-
-\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-6-1} \end{Schunk}
 
 \hypertarget{tracking-fire-movement}{%
 \subsubsection{Tracking fire movement}\label{tracking-fire-movement}}
