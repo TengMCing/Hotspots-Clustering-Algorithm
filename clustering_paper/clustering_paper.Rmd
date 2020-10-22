@@ -76,11 +76,11 @@ if (!file.exists("figures/fire_mov.jpeg")){
 
 Bushfires are a major problem for Australia, and many other parts of the globe. There is concern that as the climate becomes hotter, and drier, that the impact of fires becomes much more severe and extensive. In Australia, the 2019-2020 fires were the worst on record causing extensive ecological damage, as well as damage to agricultural resources, properties and infrastructure. The Wollemi pine, rare prehistoric trees, required special forces intervention to prevent the last stands in the world, in remote wilderness areas, from being turned into ash. 
 
-Contributing to the problem is that many fires started in very remote areas, locations deep into the temperate forests ignited by lightning, that are virtually impossible to access or to monitor. Satellite data provides a possible solution to this, particularly remotely sensed hot spot data, which may be useful in detecting new ignitions and movements of fires. Understanding fires in remote areas using satellite data may provide some help in developing effective strategies for mitigating bushfire impact. 
+Contributing to the problem is that many fires started in very remote areas, locations deep into the temperate forests ignited by lightning, that are virtually impossible to access or to monitor. Satellite data provides a possible solution to this, particularly remotely sensed hotspot data, which may be useful in detecting new ignitions and movements of fires. Understanding fires in remote areas using satellite data may provide some help in developing effective strategies for mitigating bushfire impact. 
 
-This work addresses this topic. Using hot spot data, can we cluster in space and time, in order to determine (1) points of ignition and (2) track the movement of bush fires. 
+This work addresses this topic. Using hotspot data, can we cluster in space and time, in order to determine (1) points of ignition and (2) track the movement of bushfires. 
 
-This paper is organised as follows. The next section provides an introduction to the literature on spatiotemporal clustering and bush fire modeling and dynamics. Section [Algorithm] describes the clustering algorithm, and section [Application] illustrates how the resulting data can be used to study bush fire ignition. 
+This paper is organised as follows. The next section provides an introduction to the literature on spatiotemporal clustering and bushfire modeling and dynamics. Section [Algorithm] describes the clustering algorithm, and section [Application] illustrates how the resulting data can be used to study bushfire ignition. 
 
 <!--
 - What is the data, generic structure
@@ -90,20 +90,19 @@ This paper is organised as follows. The next section provides an introduction to
 
 ## Background
 
-### Spatiotemporal clustering
+<!-- literature review -->
 
-### Bushfire modeling
 
 ## Algorithm 
 
 ### Data pre-processing
 
+To illustrate this algorithm, hotspot data during 2019-2020 Australia bushfire season taken from Himawari-8 satellite [@jaxa] was used. This hotpot dataset contained records of 1989572 hotspots for 6 months in the full disk of 140 \textdegree east longitude. Before applying the algorithm on the data, two necessary pre-processing steps needed to be performed. Given we focused on the bushfires in Victoria, only the hotspots within the boundary of Victoria were kept. Besides, a threshold (irradiance over 100 watts per square metre) for fire power was used to reduce noises from the background. The final dataset contained 75936 hotspots, which is shown in Figure \ref{fig:hotspots}.
+
+
 <!--
 To track bushfires in Australia remotely, we used hotspots data taken from the Himawari-8 satellite. The hotspots data is available on the JAXA FTP site in CSV file format, and only the data during October 2019 to March 2020 was downloaded. It contains records of 1989572 hotspots for 5 months in the full disk of 140 \textdegree east longitude. We only kept records of hostpots within the boundary of Australia, which reduced to 1526080 records. Besides, a threshold (irradiance over 100 watts per square metre) for fire power was used to filter hotspots data, which can limit the influence of radiation from other objects. For the convention of this algorithm, a sequence of discrete timestamps was needed. We calculated the hourly difference between each record and the earliest record, then rounded them to integers. The end result was a 1010794 $\times$ 4 dataset. The four fields were the unique identifier for each row, the longitude, the latitude and the indicator of timestamps respectively. The code to implement this process is in "main.R". Read in CSV files was done by using package `readr`. Data manipulation was done by using package `dplyr`. High resolution Australia vector map was obtained from package `rnaturalearth`. Operation of geometric intersection between hotspots and Australia map was done by using package `sf`.
 -->
-
-
-
  
 
 ```{r}
@@ -115,158 +114,213 @@ hotspots$fire_id <- memberships$fire_id
 rm(memberships)
 ```
 
-```{r hotspots, fig.cap="Hotspot locations in Victoria during 2019-2020 season."}
-ggplot() +
+```{r hotspots, fig.cap="A map shown the distribution of hotspot locations in Victoria during 2019-2020 Australia bushfire season."}
+if (!file.exists("figures/before_clustering.png")){
+  ggplot() +
   geom_sf(data = vic_map) +
-  geom_point(data = hotspots[sample(1:nrow(hotspots), 5000),], aes(lon, lat), alpha = 0.3) +
-  theme_map()
+  geom_point(data = hotspots, aes(lon, lat), alpha = 0.3) +
+  theme_map() -> p
+
+  ggsave(filename = "figures/before_clustering.png", dpi = 600, plot = p)
+}
+
+
+knitr::include_graphics("figures/before_clustering.png")
 ```
 
 ### Steps
 
-This algorithm runs in a temporal manner. Starting from the first hour of the first day or the bushfire season, hotspots are grouped, and then agglomerated spatially. This proceeds to the next hour. 
+This algorithm was consist of 4 steps:
 
-**1. Divide hotspots by hour**
+1. Divided hotspots into different segments
+2. Clusterd hotspots in each segment individually
+3. Updated the clustering results recursively
+4. Computed the ignition location for each cluster
 
-The algorithm starts by dividing hotspots into subgroups given their hours since the first observed hotspot as shown in Figure \ref{fig:step1}. Notice the unit of time is an arbitrary choice. Theoretically, it can be replaced with any other units not larger than the total length of time and not less than the temporal resolution of the data. Normally, the algorithm will be sensitive to noises and unobserved hotspots if a small unit of time is used while losing details of bushfires movement if a large unit of time is used.
+**1. Divided temporal dimension into different segments**
 
-One hour is chosen to be the default unit of time because the temporal resolution of our data is 10 minutes. Besides, since bushfires usually last longer than 12 hours, treating hotspots within an hour as a whole is reasonable.
+One of the difficulties to perform clustering on spatiotemporal data was to determine the scaling of the temporal dimension. Similarly, a characteristic of hotspot data was cloud cover could lead to missing observations of a bushfire in several hours. One possible solution for both issues was flattening the temporal dimension in a small window. In other words, we predetermined the temporal dependence by introducing a parameter $ActiveTime$. The interpretation of $ActiveTime$ was the time a fire can stay smouldering but undetectable by satellite before flaring up again. 
 
-```{r step1, fig.cap="Step 1. Hotspots in the first 3 hours of the bushfire season."}
+Given a certain value of $ActiveTime$ and the length of the time frame $T$, the algorithm would define several segments,
 
-ggplot(mutate(filter(hotspots, hour_id <= 5), hour_id = paste0("hour:", hour_id))) +
-  geom_sf(data = vic_map) +
-  geom_point(aes(lon, lat), size = 1) +
-  facet_wrap(~hour_id) +
-  theme_map()
-```
+$$\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T$$
 
-**2. Start from the first hour**
+For example, if the dataset contains 48 hours of hotspots and the $ACtiveTime = 24~hours$, there will be 48 segments $\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}$, where
 
-The algorithm first selecting the hotspots in the first hour as shown in Figure \ref{fig:step2}.
+\begin{align*}
+\boldsymbol{S}_1 &= [1,1]\\
+\boldsymbol{S}_2 &= [1,2]\\
+&...\\
+\boldsymbol{S}_{25} &= [1,25]\\
+\boldsymbol{S}_{26} &= [2,26]\\
+&...\\
+\boldsymbol{S}_{47} &= [23,47]\\
+\boldsymbol{S}_{48} &= [24,48]
+\end{align*}
 
-```{r step2, fig.cap = "Step 2. Hotspots in the first hour."}
-ggplot(filter(hotspots, hour_id == 1)) +
-  geom_point(aes(lon, lat, col = "red")) +
-  theme(legend.position = "none") +
-  xlab("Lon") +
-  ylab("Lat")
-```
+**2. Cluster hotspots in each segment individually**
 
-**3. Connect reachable hotspots**
+Since the algorithm broke the temporal dimension in **step 1**, the local clustering for each segment only needed to address the hotspots spatially by introducing the second parameters $AdjDist$. $AdjDist$ represented the potential potential distance a fire could spread with respect to the temporal resolution of the data. For example, let $AdjDist = 3000 m$ and the temporal resolution of the data is 10-minute, then the potential speed of the bushfire is $3000m/10~min = 18km/h$. 
 
-We try to formalize the meaning of "cluster" to better illustrate the connection between this algorithm and the underlying bushfire behaviour. When bushfires spread over time, the satellite will record a series of hotspots along its trajectory. Thus, if two hotspots are close to each other within a certain distance in a short period of time, they could be considered as a single bushfire.
+Given a certain value of $AdjDist$ and the segment $\boldsymbol{S}_t$, the algorithm would 
 
-\begin{defn}[directly reachable] A point p is directly reachable from a point q with respect to AdjDist, if the distance between point p and q is less or equal to AdjDist.\end{defn}
+(a) Append a randomly selected hotspot $h_i$ to a empty list $\boldsymbol{L}$, where $h_i$ is the $i$th hotspot in the segment $\boldsymbol{S}_t$, and let pointer $\boldsymbol{P}$ point to the first element of the list $\boldsymbol{L}$.
 
-\begin{defn}[reachable] A point p is reachable from a point q with respect to AdjDist, if there is a chain of points $p_1$, $p_2$, ..., $p_n$, $p_1 = p$, $P_n = q$ such that $P_n$ is directly reachable from $p_{n-1}$. \end{defn}
+(b) Visit every $h_i$ where $h_i \notin \boldsymbol{L}$. If $geodesic(h_i, \boldsymbol{P})\leq AdjDist$, append $h_i$ to list $\boldsymbol{L}$.
 
-In this step, the algorithm connects all pairs of directly reachable hotspots with respect to $AdjDist = 3000m$ in the first hour as shown in Figure \ref{fig:step3}. The result of this step is an undirected and unweighted graph. $AdjDist$ is the first parameter used in this algorithm which controls the connectivity between hotspots. It is introduced for the purpose of parameterizing the speed of bushfires.
+(c) Move pointer $\boldsymbol{P}$ to the next element of the list $\boldsymbol{L}$.
 
-```{r step3, fig.cap="Step 3. All pairs of directly reachable hotspots in the first hour are connected given the AdjDist is 3000 metres. There is only one component in the graph"}
-first_hotspots <- filter(hotspots, hour_id == 1)
+(d) Repeat (b) and (c) till the pointer $\boldsymbol{P}$ reach to the end of the list $\boldsymbol{L}$.
 
-adjmatrix <- first_hotspots %>%
-  select(lon, lat) %>%
-  geodist::geodist()<=3000
+(e) For hotspots $h_i \in \boldsymbol{L}$, assign a new membership to them. Repeat (a) to (d) for unassigned hotspots in segment $\boldsymbol{S}_t$.
 
-segment_data <- NULL
-
-for (i in 1:dim(adjmatrix)[1]){
-  temp_data <- data.frame(x = first_hotspots$lon[i], 
-                               y = first_hotspots$lat[i], 
-                               xend = first_hotspots$lon[which(adjmatrix[i,])], 
-                               yend = first_hotspots$lat[which(adjmatrix[i,])])
-  if (is.null(segment_data)){
-    segment_data <- temp_data
-  } else {
-    segment_data <- bind_rows(segment_data, temp_data)
-  }
-}
-
-
-ggplot(first_hotspots) +
-  geom_segment(data = segment_data, aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_point(aes(lon, lat, col = "red"), size = 2) +
-  xlab("Lon") +
-  ylab("Lat") +
-  theme(legend.position = "none")
-  
-```
+**3. Updated the clustering results recursively**
 
 
 
 
-**4. Assign memberships to hotspots**
 
-The algorithm then clusters hotspots into groups based on the connectivity between hotspots as shown in Figure \ref{fig:step4}. Different memberships will be assigned to vertices in different components. Thus, if two hotspots are reachable from each other, they will be assigned the same membership. In the first hour, because all hotspots are reachable from other hotspots, they are assigned the same membership.  
+<!-- **1. Divide hotspots by hour** -->
 
-```{r step4, fig.cap="Step 4. All hotspots in the first hour are reachable from each other. They are assigned the same membership."}
-ggplot(first_hotspots) +
-  geom_segment(data = segment_data, aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_point(aes(lon, lat, col = "red"), size = 2) +
-  geom_text(aes(lon, lat), label = "1", nudge_x= 0.002, nudge_y = 0.002) +
-  xlab("Lon") +
-  ylab("Lat") +
-  theme(legend.position = "none")
+<!-- The algorithm starts by dividing hotspots into subgroups given their hours since the first observed hotspot as shown in Figure \ref{fig:step1}. Notice the unit of time is an arbitrary choice. Theoretically, it can be replaced with any other units not larger than the total length of time and not less than the temporal resolution of the data. Normally, the algorithm will be sensitive to noises and unobserved hotspots if a small unit of time is used while losing details of bushfires movement if a large unit of time is used. -->
 
-```
+<!-- One hour is chosen to be the default unit of time because the temporal resolution of our data is 10 minutes. Besides, since bushfires usually last longer than 12 hours, treating hotspots within an hour as a whole is reasonable. -->
 
-**5. Move to the second hour or beyond**
+<!-- ```{r step1, fig.cap="Step 1. Hotspots in the first 3 hours of the bushfire season."} -->
 
-We need to introduce the second parameter used in this algorithm, which is ActiveTime. This parameter controls the time frame of hotspots that will be included by the algorithm in each iteration. More specifically, this time frame is defined as $[max(t-ActiveTime,1),t]$, where $t$ is the current timestamp of the algorithm. For instance, if $ActiveTime = 24$ and the algorithm is clustering the hotspots in the 36th hour, then the time frame will be $[12,36]$. 
+<!-- ggplot(mutate(filter(hotspots, hour_id <= 5), hour_id = paste0("hour:", hour_id))) + -->
+<!--   geom_sf(data = vic_map) + -->
+<!--   geom_point(aes(lon, lat), size = 1) + -->
+<!--   facet_wrap(~hour_id) + -->
+<!--   theme_map() -->
+<!-- ``` -->
 
-We define this time frame for the purpose of associating the hotspots in the current timestamp with hotspots observed in previous hours. By imposing this time frame, we provide an invariant task at each iteration, which is clustering hotspots in the current hour given the clustered hotspots in previous hours.
+<!-- **2. Start from the first hour** -->
 
-Move to the hour $t$, the algorithm will select hotspots in hour between $max(t-ActiveTime,1)$ and $t$, including $max(t-ActiveTime,1)$ and $t$. Given $t = 2$ and $ActiveTime = 24$, the hotspots in the first two hours will be selected as shown in Figure \ref{fig:step5}.
+<!-- The algorithm first selecting the hotspots in the first hour as shown in Figure \ref{fig:step2}. -->
 
-```{r step5, fig.cap="Step 5. Hotspots in the first two hours. Due to overlapping, hotspots in the second hour are adjusted by 0.005 degree in longitude."}
-ggplot() +
-  geom_point(data = filter(hotspots, hour_id == 1), aes(lon, lat, col = "hour:1")) +
-  geom_point(data = filter(hotspots, hour_id == 2), aes(lon + 0.005, lat, col = "hour:2")) +
-  labs(col = "hour") +
-  xlab("Lon") +
-  ylab("Lat")
-  
-```
+<!-- ```{r step2, fig.cap = "Step 2. Hotspots in the first hour."} -->
+<!-- ggplot(filter(hotspots, hour_id == 1)) + -->
+<!--   geom_point(aes(lon, lat, col = "red")) + -->
+<!--   theme(legend.position = "none") + -->
+<!--   xlab("Lon") + -->
+<!--   ylab("Lat") -->
+<!-- ``` -->
 
-**6. Connect reachable hotspots**
+<!-- **3. Connect reachable hotspots** -->
 
-This step is equivalent to step 3 and is only used for illustration purpose. Given the hotspots in the first two hours, the algorithm connects all pairs of reachable points as shown in Figure \ref{fig:step6}.
+<!-- We try to formalize the meaning of "cluster" to better illustrate the connection between this algorithm and the underlying bushfire behaviour. When bushfires spread over time, the satellite will record a series of hotspots along its trajectory. Thus, if two hotspots are close to each other within a certain distance in a short period of time, they could be considered as a single bushfire. -->
 
-```{r step6, fig.cap="Step 6. All pairs of directly reachable hotspots in the first two hours are connected given the AdjDist is 3000 metres. There are two components in the graph."}
-ggplot() +
-  geom_segment(data = segment_data, aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_segment(data = NULL, aes(x = 141.3 + 0.005, y = -37.64, xend = 141.3 + 0.005, yend = -37.66)) +
-  geom_point(data = filter(hotspots, hour_id == 1), aes(lon, lat, col = "hour:1")) +
-  geom_point(data = filter(hotspots, hour_id == 2), aes(lon + 0.005, lat, col = "hour:2")) +
-  labs(col = "hour") +
-  xlab("Lon") +
-  ylab("Lat")
-```
+<!-- \begin{defn}[directly reachable] A point p is directly reachable from a point q with respect to AdjDist, if the distance between point p and q is less or equal to AdjDist.\end{defn} -->
 
-**7. Find the nearest hotspot in the previous hours within the same component for each hotspots in the current timestamp**
+<!-- \begin{defn}[reachable] A point p is reachable from a point q with respect to AdjDist, if there is a chain of points $p_1$, $p_2$, ..., $p_n$, $p_1 = p$, $P_n = q$ such that $P_n$ is directly reachable from $p_{n-1}$. \end{defn} -->
 
-According to the result from step 6, the algorithm will then find the nearest hotspot in the previous hours within the same component for each hotspots in the current timestamp which is the second hour as shown in Figure \ref{fig:step7}. This step along with step 8 is to solve the problem when a hotspot in the current timestamp share the same component with multiple hotspots in the previous hours. And, we need to decide which membership in the previous hours it should inherit.
+<!-- In this step, the algorithm connects all pairs of directly reachable hotspots with respect to $AdjDist = 3000m$ in the first hour as shown in Figure \ref{fig:step3}. The result of this step is an undirected and unweighted graph. $AdjDist$ is the first parameter used in this algorithm which controls the connectivity between hotspots. It is introduced for the purpose of parameterizing the speed of bushfires. -->
+
+<!-- ```{r step3, fig.cap="Step 3. All pairs of directly reachable hotspots in the first hour are connected given the AdjDist is 3000 metres. There is only one component in the graph"} -->
+<!-- first_hotspots <- filter(hotspots, hour_id == 1) -->
+
+<!-- adjmatrix <- first_hotspots %>% -->
+<!--   select(lon, lat) %>% -->
+<!--   geodist::geodist()<=3000 -->
+
+<!-- segment_data <- NULL -->
+
+<!-- for (i in 1:dim(adjmatrix)[1]){ -->
+<!--   temp_data <- data.frame(x = first_hotspots$lon[i],  -->
+<!--                                y = first_hotspots$lat[i],  -->
+<!--                                xend = first_hotspots$lon[which(adjmatrix[i,])],  -->
+<!--                                yend = first_hotspots$lat[which(adjmatrix[i,])]) -->
+<!--   if (is.null(segment_data)){ -->
+<!--     segment_data <- temp_data -->
+<!--   } else { -->
+<!--     segment_data <- bind_rows(segment_data, temp_data) -->
+<!--   } -->
+<!-- } -->
 
 
-```{r step7, fig.cap="Step 7. Hotspots in the second hour is connected with its nearest hotspot in the first hour within the same component. Due to overlapping, hotspots in the second hour are adjusted by 0.005 degree in longitude."}
-temp <- filter(hotspots, hour_id <= 2)
-temp <- mutate(temp, membership = paste0("component:", ifelse(lon<141.2, 1, 2)))
-temp <- mutate(temp, lon = ifelse(hour_id == 2, lon + 0.005, lon))
-temp <- mutate(temp, lat = ifelse(hour_id == 2, lat, lat))
-temp <- mutate(temp, hour_id = paste0("hour:", hour_id))
+<!-- ggplot(first_hotspots) + -->
+<!--   geom_segment(data = segment_data, aes(x = x, y = y, xend = xend, yend = yend)) + -->
+<!--   geom_point(aes(lon, lat, col = "red"), size = 2) + -->
+<!--   xlab("Lon") + -->
+<!--   ylab("Lat") + -->
+<!--   theme(legend.position = "none") -->
 
-temp2 <- filter(temp, membership == "component:1", hour_id == "hour:2")
-temp2$xend <- temp2$lon - 0.005
+<!-- ``` -->
 
-ggplot(temp) +
-  geom_segment(data = temp2, aes(x = lon, y = lat, xend = xend, yend = lat)) +
-  geom_point(aes(lon, lat, col = hour_id)) +
-  facet_wrap(~membership, scales = "free")
-```
 
-**8: Assign membership to hotspots in the current timestamp**
+
+
+<!-- **4. Assign memberships to hotspots** -->
+
+<!-- The algorithm then clusters hotspots into groups based on the connectivity between hotspots as shown in Figure \ref{fig:step4}. Different memberships will be assigned to vertices in different components. Thus, if two hotspots are reachable from each other, they will be assigned the same membership. In the first hour, because all hotspots are reachable from other hotspots, they are assigned the same membership.   -->
+
+<!-- ```{r step4, fig.cap="Step 4. All hotspots in the first hour are reachable from each other. They are assigned the same membership."} -->
+<!-- ggplot(first_hotspots) + -->
+<!--   geom_segment(data = segment_data, aes(x = x, y = y, xend = xend, yend = yend)) + -->
+<!--   geom_point(aes(lon, lat, col = "red"), size = 2) + -->
+<!--   geom_text(aes(lon, lat), label = "1", nudge_x= 0.002, nudge_y = 0.002) + -->
+<!--   xlab("Lon") + -->
+<!--   ylab("Lat") + -->
+<!--   theme(legend.position = "none") -->
+
+<!-- ``` -->
+
+<!-- **5. Move to the second hour or beyond** -->
+
+<!-- We need to introduce the second parameter used in this algorithm, which is ActiveTime. This parameter controls the time frame of hotspots that will be included by the algorithm in each iteration. More specifically, this time frame is defined as $[max(t-ActiveTime,1),t]$, where $t$ is the current timestamp of the algorithm. For instance, if $ActiveTime = 24$ and the algorithm is clustering the hotspots in the 36th hour, then the time frame will be $[12,36]$.  -->
+
+<!-- We define this time frame for the purpose of associating the hotspots in the current timestamp with hotspots observed in previous hours. By imposing this time frame, we provide an invariant task at each iteration, which is clustering hotspots in the current hour given the clustered hotspots in previous hours. -->
+
+<!-- Move to the hour $t$, the algorithm will select hotspots in hour between $max(t-ActiveTime,1)$ and $t$, including $max(t-ActiveTime,1)$ and $t$. Given $t = 2$ and $ActiveTime = 24$, the hotspots in the first two hours will be selected as shown in Figure \ref{fig:step5}. -->
+
+<!-- ```{r step5, fig.cap="Step 5. Hotspots in the first two hours. Due to overlapping, hotspots in the second hour are adjusted by 0.005 degree in longitude."} -->
+<!-- ggplot() + -->
+<!--   geom_point(data = filter(hotspots, hour_id == 1), aes(lon, lat, col = "hour:1")) + -->
+<!--   geom_point(data = filter(hotspots, hour_id == 2), aes(lon + 0.005, lat, col = "hour:2")) + -->
+<!--   labs(col = "hour") + -->
+<!--   xlab("Lon") + -->
+<!--   ylab("Lat") -->
+
+<!-- ``` -->
+
+<!-- **6. Connect reachable hotspots** -->
+
+<!-- This step is equivalent to step 3 and is only used for illustration purpose. Given the hotspots in the first two hours, the algorithm connects all pairs of reachable points as shown in Figure \ref{fig:step6}. -->
+
+<!-- ```{r step6, fig.cap="Step 6. All pairs of directly reachable hotspots in the first two hours are connected given the AdjDist is 3000 metres. There are two components in the graph."} -->
+<!-- ggplot() + -->
+<!--   geom_segment(data = segment_data, aes(x = x, y = y, xend = xend, yend = yend)) + -->
+<!--   geom_segment(data = NULL, aes(x = 141.3 + 0.005, y = -37.64, xend = 141.3 + 0.005, yend = -37.66)) + -->
+<!--   geom_point(data = filter(hotspots, hour_id == 1), aes(lon, lat, col = "hour:1")) + -->
+<!--   geom_point(data = filter(hotspots, hour_id == 2), aes(lon + 0.005, lat, col = "hour:2")) + -->
+<!--   labs(col = "hour") + -->
+<!--   xlab("Lon") + -->
+<!--   ylab("Lat") -->
+<!-- ``` -->
+
+<!-- **7. Find the nearest hotspot in the previous hours within the same component for each hotspots in the current timestamp** -->
+
+<!-- According to the result from step 6, the algorithm will then find the nearest hotspot in the previous hours within the same component for each hotspots in the current timestamp which is the second hour as shown in Figure \ref{fig:step7}. This step along with step 8 is to solve the problem when a hotspot in the current timestamp share the same component with multiple hotspots in the previous hours. And, we need to decide which membership in the previous hours it should inherit. -->
+
+
+<!-- ```{r step7, fig.cap="Step 7. Hotspots in the second hour is connected with its nearest hotspot in the first hour within the same component. Due to overlapping, hotspots in the second hour are adjusted by 0.005 degree in longitude."} -->
+<!-- temp <- filter(hotspots, hour_id <= 2) -->
+<!-- temp <- mutate(temp, membership = paste0("component:", ifelse(lon<141.2, 1, 2))) -->
+<!-- temp <- mutate(temp, lon = ifelse(hour_id == 2, lon + 0.005, lon)) -->
+<!-- temp <- mutate(temp, lat = ifelse(hour_id == 2, lat, lat)) -->
+<!-- temp <- mutate(temp, hour_id = paste0("hour:", hour_id)) -->
+
+<!-- temp2 <- filter(temp, membership == "component:1", hour_id == "hour:2") -->
+<!-- temp2$xend <- temp2$lon - 0.005 -->
+
+<!-- ggplot(temp) + -->
+<!--   geom_segment(data = temp2, aes(x = lon, y = lat, xend = xend, yend = lat)) + -->
+<!--   geom_point(aes(lon, lat, col = hour_id)) + -->
+<!--   facet_wrap(~membership, scales = "free") -->
+<!-- ``` -->
+
+<!-- **8: Assign membership to hotspots in the current timestamp** -->
 
 
 
@@ -380,6 +434,7 @@ ggplot() +
 ### Tracking fire movement
 
 <center> <em> Display showing how a fire moves over time, maybe two or more fires </em> </center>
+
 
 ### Allocating resources for future fire prevention
 
