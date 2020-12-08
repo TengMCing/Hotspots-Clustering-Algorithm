@@ -80,8 +80,8 @@ and observed date as fields. The map of this dataset is shown in Figure
 
 The spatiotemporal clustering algorithm is consist of 4 steps, (1)
 divide hotspots into intervals, (2) cluster hotspots spatially, (3)
-update the membership labels and (4) compute ignition locations. They
-will be described in details in the rest of the section.
+update the memberships and (4) compute ignition locations. They will be
+described in details in the rest of the section.
 
 \textbf{1. Divide hotspots into intervals}
 
@@ -90,14 +90,13 @@ Euclidean space and clustered using ordinary algorithms, like K-means,
 the clustering results could be highly sensitive to the scaling of the
 temporal dimension \citep{kisilevich2009spatio}. Besides, one of the
 characteristics of the hotspot data is cloud cover could lead to missing
-observations of a bbushfire and the temporal dimension needs to be
-treated differently in the clustering algorithm.ushfire in several
-hours. It suggests that hotspots with long intervals may belong to the
-same One possible solution to this issue is dividing hotspot data into
-intervals. In other words, the temporal dependence between hotspots is
-predetermined by a parameter \(ActiveTime\). The interpretation of
-\(ActiveTime\) is the time a fire can stay smouldering but undetectable
-by satellite before flaring up again.
+observations of a bushfire in several hours. It suggests that hotspots
+with long intervals may belong to the same bushfire. One possible
+solution to this issue is dividing hotspot data into intervals. In other
+words, the temporal dependence between hotspots is predetermined by a
+parameter \(ActiveTime\). The interpretation of \(ActiveTime\) is the
+time a fire can stay smouldering but undetectable by satellite before
+flaring up again.
 
 Given a certain value of \(ActiveTime\) and the length of the time frame
 \(T\), the algorithm will define several intervals,
@@ -121,44 +120,45 @@ For example, if the dataset contains 48 hours of hotspot data and the
 \boldsymbol{S}_{48} &= [24,48]
 \end{align*}
 
-\textbf{2. Cluster hotspots in each segment individually}
+\textbf{2. Cluster hotspots spatially}
 
-Since the algorithm broke the temporal dimension in \textbf{step 1}, the
-local clustering for each segment only needed to address the hotspots
-spatially by introducing the second parameters \(AdjDist\). \(AdjDist\)
-represented the potential potential distance a fire could spread with
-respect to the temporal resolution of the data. For example, let
-\(AdjDist = 3000 m\) and the temporal resolution of the data is
-10-minute, then the potential speed of the bushfire is
+The previous step breaks the temporal dimension. Hence, the following
+step only needs to address the hotspots spatially by introducing another
+parameter \(AdjDist\). \(AdjDist\) represents the potential distance a
+fire can spread with respect to the temporal resolution of the data. For
+example, let \(AdjDist = 3000 m\) and the temporal resolution of the
+data is 10-minute, then the potential speed of the bushfire is
 \(3000m/10~min = 18km/h\).
 
-Given a certain value of \(AdjDist\) and the segment
-\(\boldsymbol{S}_t\), the algorithm would
+Given a fixed value of \(AdjDist\) and the interval
+\(\boldsymbol{S}_t\), the algorithm will:
 
 \begin{enumerate}
 \def\labelenumi{(\alph{enumi})}
 \item
   Append a randomly selected hotspot \(h_i\) to a empty list
   \(\boldsymbol{L}\), where \(h_i\) is the \(i\)th hotspot in the
-  segment \(\boldsymbol{S}_t\), and let pointer \(\boldsymbol{P}\)
+  interval \(\boldsymbol{S}_t\), and let pointer \(\boldsymbol{P}\)
   points to the first element of the list \(\boldsymbol{L}\).
 \item
   Visit every \(h_i\) where \(h_i \notin \boldsymbol{L}\). If
-  \(geodesic(h_i, \boldsymbol{P})\leq AdjDist\), appends \(h_i\) to list
+  \(geodesic(h_i, \boldsymbol{P})\leq AdjDist\), append \(h_i\) to list
   \(\boldsymbol{L}\).
 \item
-  Move pointer \(\boldsymbol{P}\) to the next element of the list
+  Move pointer \(\boldsymbol{P}\) to the next item of the list
   \(\boldsymbol{L}\).
 \item
   Repeat (b) and (c) till the pointer \(\boldsymbol{P}\) reaches to the
   end of the list \(\boldsymbol{L}\).
 \item
-  For hotspots \(h_i \in \boldsymbol{L}\), assign a new membership to
-  them. Repeat (a) to (d) for unassigned hotspots in segment
-  \(\boldsymbol{S}_t\).
+  For all hotspots \(h_i \in \boldsymbol{L}\), assign a new membership
+  to them. Pop these hotspots from the interval \(\boldsymbol{S}_t\).
+  Repeat (a) to (e) if interval \(\boldsymbol{S}_t\) is not empty.
+\item
+  Recover the interval \(\boldsymbol{S}_t\) and record the memberships.
 \end{enumerate}
 
-\textbf{3. Updated the clustering results recursively}
+\textbf{3. Update the memberships}
 
 \hypertarget{effects-of-parameter-choices}{%
 \subsubsection{Effects of parameter
