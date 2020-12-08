@@ -45,61 +45,61 @@ resulting data can be used to study bushfire ignition.
 \hypertarget{background}{%
 \subsection{Background}\label{background}}
 
+literature review
+
 \hypertarget{algorithm}{%
 \subsection{Algorithm}\label{algorithm}}
 
-\hypertarget{data-pre-processing}{%
-\subsubsection{Data pre-processing}\label{data-pre-processing}}
+\hypertarget{data-source}{%
+\subsubsection{Data source}\label{data-source}}
 
-To illustrate this algorithm, hotspot data during 2019-2020 Australia
-bushfire season taken from Himawari-8 satellite \citep{jaxa} was used.
-This hotpot dataset contained records of 1989572 hotspots for 6 months
-in the full disk of 140 \textdegree east longitude. Before applying the
-algorithm on the data, two necessary pre-processing steps needed to be
-performed. Given we focused on the bushfires in Victoria, only the
-hotspots within the boundary of Victoria were kept. Besides, a threshold
-(irradiance over 100 watts per square metre) for fire power was used to
-reduce noises from the background. The final dataset contained 75936
-hotspots, which is shown in Figure \ref{fig:hotspots}.
+This algorithm is initially developed in the research of 2019-2020
+bushfires in Victoria, Australia. Therefore, the illustration of this
+algorithm will use hotspot data during 2019-2020 Australian bushfire
+season taken from Himawari-8 satellite \citep{jaxa}. This satellite
+hotpot dataset contains records of 1989572 hotspots for 6 months in the
+full disk of 140 \textdegree east longitude.
+
+The data pre-processing procedure includes selecting hotspots within the
+boundary of Victoria and filtering hotspots with a threshold (irradiance
+over 100 watts per square metre) suggested by \citet{hotspots} to reduce
+noise from the background.
+
+The final dataset contains 75936 hotspots with ID, longitude, latitude
+and observed date as fields. The map of this dataset is shown in Figure
+\ref{fig:hotspots}.
 
 \begin{Schunk}
 \begin{figure}
-\includegraphics[width=0.8\linewidth]{figures/before_clustering} \caption[A map shown the distribution of hotspot locations in Victoria during 2019-2020 Australia bushfire season]{A map shown the distribution of hotspot locations in Victoria during 2019-2020 Australia bushfire season.}\label{fig:hotspots}
+\includegraphics[width=0.8\linewidth]{figures/before_clustering} \caption[A map shows the distribution of hotspots in Victoria during 2019-2020 Australia bushfire season]{A map shows the distribution of hotspots in Victoria during 2019-2020 Australia bushfire season.}\label{fig:hotspots}
 \end{figure}
 \end{Schunk}
 
 \hypertarget{steps}{%
 \subsubsection{Steps}\label{steps}}
 
-This algorithm was consist of 4 steps:
+The spatiotemporal clustering algorithm is consist of 4 steps, (1)
+divide hotspots into intervals, (2) cluster hotspots spatially, (3)
+update the membership labels and (4) compute ignition locations. They
+will be described in details in the rest of the section.
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  Divided hotspots into different segments
-\item
-  Clusterd hotspots in each segment individually
-\item
-  Updated the clustering results recursively
-\item
-  Computed the ignition location for each cluster
-\end{enumerate}
+\textbf{1. Divide hotspots into intervals}
 
-\textbf{1. Divided temporal dimension into different segments}
-
-One of the difficulties to perform clustering on spatiotemporal data was
-to determine the scaling of the temporal dimension. Similarly, a
-characteristic of hotspot data was cloud cover could lead to missing
-observations of a bushfire in several hours. One possible solution for
-both issues was flattening the temporal dimension in a small window. In
-other words, we predetermined the temporal dependence by introducing a
-parameter \(ActiveTime\). The interpretation of \(ActiveTime\) was the
-time a fire can stay smouldering but undetectable by satellite before
-flaring up again.
+A characteristic of the hotspot data is cloud cover could lead to
+missing observations of a bushfire in several hours. This suggests that
+the algorithm needs to link hotspots with long intervals. Moreover, one
+of the difficulties to perform clustering on spatiotemporal data is to
+determine the scaling of the temporal dimension since the clustering
+results could be highly sensitive to the scaling
+\citep{kisilevich2009spatio}. One possible solution to this issue is
+dividing hotspot data into short intervals. In other words, the temporal
+dependence between hotspots is predetermined by introducing a parameter
+\(ActiveTime\). The interpretation of \(ActiveTime\) is the time a fire
+can stay smouldering but undetectable by satellite before flaring up
+again.
 
 Given a certain value of \(ActiveTime\) and the length of the time frame
-\(T\), the algorithm would define several segments,
+\(T\), the algorithm would define several intervals,
 
 \[\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T\]
 
@@ -137,17 +137,17 @@ Given a certain value of \(AdjDist\) and the segment
 \item
   Append a randomly selected hotspot \(h_i\) to a empty list
   \(\boldsymbol{L}\), where \(h_i\) is the \(i\)th hotspot in the
-  segment \(\boldsymbol{S}_t\), and let pointer \(\boldsymbol{P}\) point
-  to the first element of the list \(\boldsymbol{L}\).
+  segment \(\boldsymbol{S}_t\), and let pointer \(\boldsymbol{P}\)
+  points to the first element of the list \(\boldsymbol{L}\).
 \item
   Visit every \(h_i\) where \(h_i \notin \boldsymbol{L}\). If
-  \(geodesic(h_i, \boldsymbol{P})\leq AdjDist\), append \(h_i\) to list
+  \(geodesic(h_i, \boldsymbol{P})\leq AdjDist\), appends \(h_i\) to list
   \(\boldsymbol{L}\).
 \item
   Move pointer \(\boldsymbol{P}\) to the next element of the list
   \(\boldsymbol{L}\).
 \item
-  Repeat (b) and (c) till the pointer \(\boldsymbol{P}\) reach to the
+  Repeat (b) and (c) till the pointer \(\boldsymbol{P}\) reaches to the
   end of the list \(\boldsymbol{L}\).
 \item
   For hotspots \(h_i \in \boldsymbol{L}\), assign a new membership to
@@ -232,7 +232,7 @@ line 1\\ line 2\\
 %
 %
 %
-\\\href{mailto:emily@research.att.com}{\nolinkurl{emily@research.att.com}}
+\\\href{mailto:emdodwell@gmail.com}{\nolinkurl{emdodwell@gmail.com}}
 }
 
 \address{%
