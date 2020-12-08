@@ -174,7 +174,17 @@ Given a fixed value of $AdjDist$ and the interval $\boldsymbol{S}_t$, the algori
 
 (f) Recover the interval $\boldsymbol{S}_t$ and record the memberships.
 
+Figs and Exs helps explaining (a) - (f)
+
 **3. Update the memberships**
+
+With clustering results for each interval, the next step is to update the memberships by bringing in information from earlier intervals.
+
+This step starts from $t=2$ till $t=T$. Given the interval $\boldsymbol{S}_t$, the algorithm will,
+
+(a) Let $h_i$ succeeds its membership from $\boldsymbol{S}_{t-1}$, if $h_i$ also belongs to $\boldsymbol{S}_{t-1}$, where $h_i$ is the $i$th hotspot in the interval $\boldsymbol{S}_t$. These hotspots are collected by a set $\boldsymbol{H}_s = \{h_s^1,h_s^2,...\}$.
+
+(b) Set $\boldsymbol{H}_c = \{h_c^1,h_c^2,...\}$, where $h_c^i$ is the $i$th hotspot in set $\boldsymbol{H}_c$. $h_c^i$ belongs to $\boldsymbol{S}_t$ but does not belong to $\boldsymbol{S}_{t-1}$. If $h_c^i$ being clustered into the same bushfire as $h_s^j$ in interval $\boldsymbol{S}_t$, 
 
 
 
