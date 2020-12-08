@@ -135,13 +135,15 @@ The spatiotemporal clustering algorithm is consist of 4 steps, (1) divide hotspo
 
 **1. Divide hotspots into intervals**
 
-A characteristic of the hotspot data is cloud cover could lead to missing observations of a bushfire in several hours. This suggests that the algorithm needs to link hotspots with long intervals. Moreover, one of the difficulties to perform clustering on spatiotemporal data is to determine the scaling of the temporal dimension since the clustering results could be highly sensitive to the scaling [@kisilevich2009spatio]. One possible solution to this issue is dividing hotspot data into short intervals. In other words, the temporal dependence between hotspots is predetermined by introducing a parameter $ActiveTime$. The interpretation of $ActiveTime$ is the time a fire can stay smouldering but undetectable by satellite before flaring up again. 
+Despite hotspot data can be represented in the three-dimensional Euclidean space and clustered using ordinary algorithms, like K-means, the clustering results could be highly sensitive to the scaling of the temporal dimension [@kisilevich2009spatio]. Besides, one of the characteristics of the hotspot data is cloud cover could lead to missing observations of a bbushfire and the temporal dimension needs to be treated differently in the clustering algorithm.ushfire in several hours. It suggests that hotspots with long intervals may belong to the same  One possible solution to this issue is dividing hotspot data into intervals. In other words, the temporal dependence between hotspots is predetermined by a parameter $ActiveTime$. The interpretation of $ActiveTime$ is the time a fire can stay smouldering but undetectable by satellite before flaring up again. 
 
-Given a certain value of $ActiveTime$ and the length of the time frame $T$, the algorithm would define several intervals,
+Given a certain value of $ActiveTime$ and the length of the time frame $T$, the algorithm will define several intervals,
 
 $$\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T$$
 
-For example, if the dataset contains 48 hours of hotspots and the $ACtiveTime = 24~hours$, there will be 48 segments $\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}$, where
+,where $T$ and $t$ have the same unit as $ActiveTime$. 
+
+For example, if the dataset contains 48 hours of hotspot data and the $ACtiveTime = 24~hours$, there will be 48 intervals, $\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}$, where
 
 \begin{align*}
 \boldsymbol{S}_1 &= [1,1]\\
