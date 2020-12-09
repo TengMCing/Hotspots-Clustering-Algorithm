@@ -174,7 +174,172 @@ Given a fixed value of $AdjDist$ and the interval $\boldsymbol{S}_t$, the algori
 
 (f) Recover the interval $\boldsymbol{S}_t$ and record the memberships.
 
-Figs and Exs helps explaining (a) - (f)
+
+Diagram \ref{fig:step2figs} shows an example of this step.
+
+```{r step2figs, fig.cap="Description", fig.height=6, fig.width = 8}
+
+set.seed(1256)
+x <- rnorm(10, mean = 0, sd = 3)
+y <- rnorm(10, mean = 0, sd = 2)
+x <- c(x,rnorm(10, mean = 5, sd = 2))
+y <- c(y,rnorm(10, mean = 5, sd = 3))
+points <- data.frame(x=x, y=y)
+
+x <- c(x,rnorm(10, mean = 6, sd = 2))
+y <- c(y,rnorm(10, mean = 7, sd = 2))
+points_2 <- data.frame(x=x, y=y)
+
+ggplot(points) +
+  geom_point(aes(x,y), shape = 21, size = 1) +
+  geom_point(data = NULL, aes(points$x[3], 
+                              points$y[3],
+                              col = "L"),
+                              size = 3) +
+  geom_text(data = NULL, aes(points$x[3], points$y[3], label = "P"), size = 2) +
+  coord_fixed() +
+  theme_bw() +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  theme(legend.position = "none") +
+  scale_color_manual(values = "red") +
+  labs(col = "") +
+  ggtitle("(a)") -> p1
+
+ggplot() +
+  geom_point(data = points, aes(x, y), size = 1, shape = 21) +
+  geom_segment(data = NULL, aes(x = points$x[3], 
+                                y = points$y[3],
+                                xend = points$x[c(2, 4, 7, 11, 18)],
+                                yend = points$y[c(2, 4, 7, 11, 18)])) +
+  geom_point(data = NULL, aes(points$x[c(2, 4, 7, 11, 18)], 
+                              points$y[c(2, 4, 7, 11, 18)],
+                              col = "L")) +
+  geom_point(data = NULL, aes(points$x[3], 
+                              points$y[3],
+                              col = "L"),
+                              size = 3) +
+  geom_text(data = NULL, aes(points$x[3], points$y[3], label = "P"), size = 2) +
+
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  scale_color_manual(values = "red") +
+  labs(col = "", size = "") +
+  ggtitle("(b)") -> p2
+
+
+ggplot() +
+  geom_point(data = points, aes(x, y), size = 1, shape = 21) +
+  geom_segment(data = NULL, aes(x = points$x[7], 
+                                y = points$y[7],
+                                xend = points$x[c(5, 15)],
+                                yend = points$y[c(5, 15)])) +
+  geom_point(data = NULL, aes(points$x[c(2, 3, 4, 11, 18, 5, 15)], 
+                              points$y[c(2, 3, 4, 11, 18, 5, 15)],
+                              col = "L")) +
+  geom_point(data = NULL, aes(points$x[7], 
+                              points$y[7],
+                              col = "L"),
+                              size = 3) +
+  geom_text(data = NULL, aes(points$x[7], points$y[7], label = "P"), size = 2) +
+
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "right") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  scale_color_manual(values = "red") +
+  labs(col = "", size = "") +
+  ggtitle("(c)") -> p3
+
+ggplot() +
+  geom_point(data = points, aes(x, y), size = 1, shape = 21) +
+  geom_point(data = NULL, aes(points$x[c(2, 3, 4, 7, 11, 18, 5, 12, 13, 14, 15, 16, 17, 18)], 
+                              points$y[c(2, 3, 4, 7, 11, 18, 5, 12, 13, 14, 15, 16, 17, 18)],
+                              col = "L")) +
+  
+  geom_point(data = NULL, aes(points$x[16], 
+                              points$y[16],
+                              col = "L"),
+                              size = 3) +
+  geom_text(data = NULL, aes(points$x[16], points$y[16], label = "P"), size = 2) +
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  scale_color_manual(values = "red") +
+  labs(col = "", size = "") +
+  ggtitle("(d)") -> p4
+
+ggplot() +
+  geom_point(data = points, aes(x, y), size = 1, shape = 21) +
+  geom_point(data = NULL, aes(points$x[-c(2, 3, 4, 7, 11, 18, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20)], 
+                              points$y[-c(2, 3, 4, 7, 11, 18, 5, 12, 13, 14, 15, 16, 17, 18, 19, 20)],
+                              col = "L")) +
+  
+  geom_point(data = NULL, aes(points$x[6], 
+                              points$y[6],
+                              col = "L"),
+                              size = 3) +
+  geom_text(data = NULL, aes(points$x[6], points$y[6], label = "P"), size = 2) +
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  scale_color_manual(values = "red") +
+  labs(col = "", size = "") +
+  ggtitle("(e)") -> p5
+
+
+point_cols <- rep(1, 20)
+point_cols[c(2, 3, 4, 7, 11, 18, 5, 12, 13, 14, 15, 16, 17, 18)] <- 2
+point_cols[19] <- 3
+point_cols[20] <- 4
+
+ggplot() +
+  geom_text(data = points, aes(x, y, label = point_cols)) +
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "right") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  ggtitle("(f)") -> p6
+
+
+library(patchwork)
+
+(p1 + p2 + p3)/(p4 + p5 + p6)
+```
+
 
 **3. Update the memberships**
 
@@ -182,13 +347,86 @@ With clustering results for each interval, the next step is to update the member
 
 This step starts from $t=2$ till $t=T$. Given the interval $\boldsymbol{S}_t$, the algorithm will,
 
-(a) Let $h_i$ succeeds its membership from $\boldsymbol{S}_{t-1}$, if $h_i$ also belongs to $\boldsymbol{S}_{t-1}$, where $h_i$ is the $i$th hotspot in the interval $\boldsymbol{S}_t$. These hotspots are collected by a set $\boldsymbol{H}_s = \{h_s^1,h_s^2,...\}$.
+(a) Let $h_i$ succeeds its membership from $\boldsymbol{S}_{t-1}$, if $h_i$ belongs to $\boldsymbol{S}_{t-1}$, where $h_i$ is the $i$th hotspot in the interval $\boldsymbol{S}_t$. These hotspots are collected by a set $\boldsymbol{H}_s = \{h_s^1,h_s^2,...\}$.
 
-(b) Set $\boldsymbol{H}_c = \{h_c^1,h_c^2,...\}$, where $h_c^i$ is the $i$th hotspot in set $\boldsymbol{H}_c$. $h_c^i$ belongs to $\boldsymbol{S}_t$ but does not belong to $\boldsymbol{S}_{t-1}$. If $h_c^i$ being clustered into the same bushfire as $h_s^j$ in interval $\boldsymbol{S}_t$, 
-
-
+(b) Set $\boldsymbol{H}_c = \{h_c^1,h_c^2,...\}$, where $h_c^i$ is the $i$th hotspot in set $\boldsymbol{H}_c$. $h_c^i$ belongs to $\boldsymbol{S}_t$ but does not belong to $\boldsymbol{S}_{t-1}$. If $h_c^i$ being clustered into the same component with $h_s^j$ in interval $\boldsymbol{S}_t$, $h_c^i$ succeeds the membership from the nearest $h_s^j$, where $h_s^j$ is the $j$th hotspot in set $\boldsymbol{H}_s$. 
 
 
+```{r}
+point_cols2 <- rep("a", 30)
+point_cols2[19] <- "b"
+point_cols2[c(1, 8, 6, 9, 10)] <- "c"
+
+ggplot() +
+  geom_point(data = points_2, aes(x, y, col = paste0("Cluster ", as.character(point_cols2)), shape = c(1:30)<=20)) +
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "right") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  labs(col = "", shape = expression("Hotspots "*" in "*S[t-1])) +
+  scale_shape_manual(values = c(1, 2)) +
+  ggtitle(quote(S[t])) -> p1
+
+
+ggplot() +
+  geom_text(data = points, aes(x, y, label = point_cols)) +
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "left") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  labs(col = "") +
+  ggtitle(quote(S[t-1])) -> p2
+
+
+
+```
+
+```{r}
+ggplot() +
+  geom_text(data = points_2[1:20, ], aes(x, y, col = paste0("Cluster ", as.character(point_cols2[1:20])), label = point_cols)) +
+  geom_point(data = points_2[21:30, ], aes(x, y, col = paste0("Cluster ", as.character(point_cols2[21:30])))) +
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "left") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  labs(col = "", shape = expression("Hotspots "*" in "*S[t-1]), title = "(a)", subtitle = quote(S[t])) +
+  scale_shape_manual(values = c(1, 2)) -> p3
+```
+
+
+
+```{r step3figs, fig.height=6, fig.width = 8, fig.cap = "Description"}
+ggplot() +
+  geom_text(data = points_2, aes(x, y, label = c(point_cols, 4, 2, 4, 4, 2, 2, 2, 4, 4, 2) , col = c(1:30)<=20)) +
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "right") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  labs(col = expression("Hotspots "*" in "*S[t-1]), title = "(b)", subtitle = quote(S[t])) +
+  scale_shape_manual(values = c(1, 2)) -> p4
+
+(p2 + p1) / (p3 + p4)
+```
 
 
 ### Effects of parameter choices
