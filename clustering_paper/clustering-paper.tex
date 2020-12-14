@@ -172,7 +172,7 @@ Diagram \ref{fig:step2figs} shows an example of this step.
 
 }
 
-\caption[Description]{Description}\label{fig:step2figs}
+\caption{An example of step 2 given 20 hotspots in interval $\boldsymbol{S}_t$. (a) A hotspot is selected randomly as the first item of list $\boldsymbol{L}$ and the pointer $\boldsymbol{P}$. Hotspots in list $\boldsymbol{L}$ are in red. Pointer $\boldsymbol{P}$ is drawn with larger marker size. (b) Nearby hotspots of the pointer $\boldsymbol{P}$ are appended to the list $\boldsymbol{L}$. (c) Move pointer $\boldsymbol{P}$ to the next item of list $\boldsymbol{L}$ and append the nearby hotspots to list $\boldsymbol{L}$. (d) The first cluster is identified via repeating substep (c). (e) Clear the list $\boldsymbol{L}$, then randomly select an unassigned hotspot to identify another cluster. (f) The final clustering result is produced via repeating substep (d). The labels show the cluster each hotspot belongs to.}\label{fig:step2figs}
 \end{figure}
 \end{Schunk}
 
@@ -208,9 +208,17 @@ This step starts from \(t=2\) till \(t=T\). Given the interval
 
 }
 
-\caption[Description]{Description}\label{fig:step3figs}
+\caption{An example of step 3. In this example, there are 30 hotspots in interval $\boldsymbol{S}_t$ (a) 20 out of 30 hotspots belong to both interval $\boldsymbol{S}_t$ and interval $\boldsymbol{S}_{t-1}$. These hotspots succeed their memberships from $\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots only belong to interval $\boldsymbol{S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\boldsymbol{S}_t$. }\label{fig:step3figs}
 \end{figure}
 \end{Schunk}
+
+\textbf{4. Compute ignition locations}
+
+The previous step assigns all hotspots with updated memberships. Hence,
+the final step is to compute the ignition location for each cluster. If
+there are multiple earliest hotspots belong to the same cluster, the
+centroid of these hotspots is used as the ignition location. Otherwise,
+the earliest hotspot is used as the ignition location.
 
 \hypertarget{effects-of-parameter-choices}{%
 \subsubsection{Effects of parameter
@@ -231,24 +239,33 @@ Show ignition points for a particularly heavy day and another for a
 particularly light day
 
 \begin{Schunk}
+\begin{figure}
 
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/app1-1} 
 
-\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-4-1} \end{center}
+}
 
+\end{figure}
 \end{Schunk}
 
 \begin{Schunk}
+\begin{figure}
 
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/app2-1} 
 
-\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-6-1} \end{center}
+}
 
+\end{figure}
 \end{Schunk}
 
 \begin{Schunk}
+\begin{figure}
 
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/app3-1} 
 
-\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-7-1} \end{center}
+}
 
+\end{figure}
 \end{Schunk}
 
 \hypertarget{tracking-fire-movement}{%
