@@ -224,9 +224,44 @@ the earliest hotspot is used as the ignition location.
 \subsubsection{Effects of parameter
 choices}\label{effects-of-parameter-choices}}
 
-There are two parameters that can be tuned in this algorithm. They are
-\texttt{adj\_dist}, which is the density distance and
-\texttt{active\_time}, which is the .
+There are two parameters that can be tuned in this algorithm, which are
+\(AdjDist\) and \(ActiveTime\). Increase \(AdjDist\) or the
+\(ActiveTime\) will usually reduce the number of clusters. However, if
+there are large gaps between clusters spatially and temporally, increase
+\(ActiveTime\) and \(AdjDist\) will not significantly reduce the number
+of clusters. Given one of the metrics to evaluate the goodness of the
+clustering is the gap between clusters, the optimal choice of
+\(AdjDist\) and \(ActiveTime\) can be chosen when they have limited
+impact on the number of clusters. However, with this rule of thumb, the
+optimal \(ActiveTime\) and \(AdjDist\) will approach to infinitely as
+the number of clusters approach to 1. Hence, a restriction needs to be
+applied on this process. Increase of \(ActiveTime\) and \(AdjDist\) will
+allowed only when there is major fall of the number of clusters. Due to
+its similarity to determining the number of principal components to keep
+in a principal component analysis, a visualization tool is developed
+based on the scree plot.
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{figures/clustering_tuning_1} 
+
+}
+
+\caption[Desc]{Desc}\label{fig:vis1}
+\end{figure}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{figures/clustering_tuning_2} 
+
+}
+
+\caption[Desc]{Desc}\label{fig:vis2}
+\end{figure}
+\end{Schunk}
 
 \hypertarget{application}{%
 \subsection{Application}\label{application}}
