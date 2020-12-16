@@ -208,7 +208,7 @@ This step starts from \(t=2\) till \(t=T\). Given the interval
 
 }
 
-\caption{An example of step 3. In this example, there are 30 hotspots in interval $\boldsymbol{S}_t$ (a) 20 out of 30 hotspots belong to both interval $\boldsymbol{S}_t$ and interval $\boldsymbol{S}_{t-1}$. These hotspots succeed their memberships from $\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots only belong to interval $\boldsymbol{S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\boldsymbol{S}_t$. }\label{fig:step3figs}
+\caption{An example of step 3. In this example, there are 30 hotspots in interval $\boldsymbol{S}_t$ (a) 20 out of 30 hotspots belong to both interval $\boldsymbol{S}_t$ and interval $\boldsymbol{S}_{t-1}$. These hotspots succeed their memberships from $\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\boldsymbol{S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\boldsymbol{S}_t$. }\label{fig:step3figs}
 \end{figure}
 \end{Schunk}
 
@@ -231,15 +231,15 @@ there are large gaps between clusters spatially and temporally, increase
 \(ActiveTime\) and \(AdjDist\) will not significantly reduce the number
 of clusters. Given one of the metrics to evaluate the goodness of the
 clustering is the gap between clusters, the optimal choice of
-\(AdjDist\) and \(ActiveTime\) can be chosen when they have limited
-impact on the number of clusters. However, with this rule of thumb, the
+\(AdjDist\) and \(ActiveTime\) can be chosen when they have minimum
+impact on the number of clusters. However, under this setting, the
 optimal \(ActiveTime\) and \(AdjDist\) will approach to infinitely as
 the number of clusters approach to 1. Hence, a restriction needs to be
-applied on this process. Increase of \(ActiveTime\) and \(AdjDist\) will
-allowed only when there is major fall of the number of clusters. Due to
-its similarity to determining the number of principal components to keep
-in a principal component analysis, a visualization tool is developed
-based on the scree plot.
+applied on this optimization. Increase of \(ActiveTime\) and \(AdjDist\)
+will only be allowed when there is a major fall of the number of
+clusters. Due to its similarity to determining the number of principal
+components to keep in a principal component analysis, a visualization
+tool is developed inspired by the scree plot.
 
 \begin{Schunk}
 \begin{figure}
@@ -248,7 +248,7 @@ based on the scree plot.
 
 }
 
-\caption[Desc]{Desc}\label{fig:vis1}
+\caption[A visualization tool for parameter tuning ]{A visualization tool for parameter tuning . It works like a scree plot. Major falls of the number of clusters are observed when $AdjDist < 3000$ so the reasonable choice of $AdjDist$ is 3000m.}\label{fig:vis1}
 \end{figure}
 \end{Schunk}
 
@@ -259,7 +259,7 @@ based on the scree plot.
 
 }
 
-\caption[Desc]{Desc}\label{fig:vis2}
+\caption[Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours]{Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours.}\label{fig:vis2}
 \end{figure}
 \end{Schunk}
 
