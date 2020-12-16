@@ -12,7 +12,7 @@ p1 <- ggplot(filter(grid)) +
   theme_bw(base_size = 20)
 
 
-ggsave("figures/clustering_tuning_1.jpeg", p1, width = 10, dpi = 600)
+ggsave("figures/clustering_tuning_1.jpeg", p1, width = 10, dpi = 300)
 
 p2 <- ggplot(filter(grid, AdjDist>2000)) +
   geom_point(aes(ActiveTime, count)) +
@@ -23,7 +23,7 @@ p2 <- ggplot(filter(grid, AdjDist>2000)) +
   theme_bw(base_size = 20)
 
 
-ggsave("figures/clustering_tuning_2.jpeg", p2, width = 10, dpi = 600)
+ggsave("figures/clustering_tuning_2.jpeg", p2, width = 10, dpi = 300)
 
 fileConn <- file("scripts/setting.txt")
 writeLines(c("active_time = 24","adj_distance = 3000"), fileConn)

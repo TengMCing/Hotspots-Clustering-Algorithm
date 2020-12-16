@@ -122,7 +122,7 @@ if (!file.exists("figures/before_clustering.png")){
   geom_point(data = hotspots, aes(lon, lat), alpha = 0.3) +
   theme_map() -> p
 
-  ggsave(filename = "figures/before_clustering.png", dpi = 600, plot = p)
+  ggsave(filename = "figures/before_clustering.png", dpi = 300, plot = p)
 }
 
 
@@ -352,6 +352,7 @@ This step starts from $t=2$ till $t=T$. Given the interval $\boldsymbol{S}_t$, t
 
 (b) Set $\boldsymbol{H}_c = \{h_c^1,h_c^2,...\}$, where $h_c^i$ is the $i$th hotspot in set $\boldsymbol{H}_c$. $h_c^i$ belongs to $\boldsymbol{S}_t$ but does not belong to $\boldsymbol{S}_{t-1}$. If $h_c^i$ being clustered into the same component with $h_s^j$ in interval $\boldsymbol{S}_t$, $h_c^i$ succeeds the membership from the nearest $h_s^j$, where $h_s^j$ is the $j$th hotspot in set $\boldsymbol{H}_s$. 
 
+Diagram \ref{fig:step3figs} shows an example of this step.
 
 ```{r}
 point_cols2 <- rep("a", 30)
@@ -470,9 +471,9 @@ knitr::include_graphics("figures/clustering_tuning_2.jpeg")
 
 ### Determining the ignition point and time for individual fires
 
-<center> <em> Show ignition points for a particularly heavy day and another for a particularly light day </em> </center>
+By applying the spatiotemporal clustering algorithm on the hotspot data shown in Figure \ref{fig:hotspots}, bushfires can be identified and ignition locations can be computed. The corresponding clustering results are given in Figure \ref{fig:clusteringfinalresults}.
 
-```{r app1, fig.cap=""}
+```{r clusteringfinalresults, fig.cap="A map shows the distribution of bushfire ignition locations in Victoria during 2019-2020 Australia bushfire season."}
 hotspots %>%
   group_by(fire_id) %>%
   summarise(hour_id = min(hour_id)) %>%
@@ -484,9 +485,12 @@ ignition <- left_join(temp, hotspots) %>%
 
 ggplot(ignition) +
   geom_sf(data = vic_map) +
-  geom_point(aes(lon, lat))
+  geom_point(aes(lon, lat)) +
+  theme_map()
   
 ```
+
+<center> <em> Show ignition points for a particularly heavy day and another for a particularly light day </em> </center>
 
 ```{r}
 ignition <- mutate(ignition, year = year(time), month = month(time), day = day(time))
