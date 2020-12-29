@@ -53,21 +53,23 @@ literature review
 \hypertarget{data-source}{%
 \subsubsection{Data source}\label{data-source}}
 
-This algorithm is initially developed in the research of 2019-2020
-bushfires in Victoria, Australia. Therefore, the illustration of this
-algorithm will use hotspot data during 2019-2020 Australian bushfire
-season taken from Himawari-8 satellite \citep{jaxa}. This satellite
-hotpot dataset contains records of 1989572 hotspots for 6 months in the
-full disk of 140 \textdegree east longitude.
+The illustration of this algorithm will use the wild fire product
+(produced from Himawari-8) supplied by the P-Tree System, Japan
+Aerospace Exploration Agency (JAXA) \citeyearpar{jaxa} as the data
+source. This wild fire product will be referred as the hotspot data in
+this paper. It contains records of 1989572 hotspots from October 2019 to
+March 2020 in the full disk of 140 \textdegree east longitude with 0.02
+\textdegree spatial resolution and 10 minutes temporal resolution.
 
 The data pre-processing procedure includes selecting hotspots within the
 boundary of Victoria and filtering hotspots with a threshold (irradiance
-over 100 watts per square metre) suggested by \citet{hotspots} to reduce
+over 100 watts per square metre) suggested by landscape ecologist and
+spatial scientist Dr.~Grant Williamson \citeyearpar{hotspots} to reduce
 noise from the background.
 
-The final dataset contains 75936 hotspots with ID, longitude, latitude
-and observed date as fields. The map of this dataset is shown in Figure
-\ref{fig:hotspots}.
+The final hotspot dataset contains 75936 observations with ID,
+longitude, latitude and observed date as fields. The overall
+distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
 
 \begin{Schunk}
 \begin{figure}
@@ -76,43 +78,44 @@ and observed date as fields. The map of this dataset is shown in Figure
 
 }
 
-\caption[A map shows the distribution of hotspots in Victoria during 2019-2020 Australia bushfire season]{A map shows the distribution of hotspots in Victoria during 2019-2020 Australia bushfire season.}\label{fig:hotspots}
+\caption[The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season]{The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season.}\label{fig:hotspots}
 \end{figure}
 \end{Schunk}
 
 \hypertarget{steps}{%
 \subsubsection{Steps}\label{steps}}
 
-The spatiotemporal clustering algorithm is consist of 4 steps, (1)
-divide hotspots into intervals, (2) cluster hotspots spatially, (3)
-update the memberships and (4) compute ignition locations. They will be
-described in details in the rest of the section.
+The spatiotemporal clustering algorithm is consist of 3 steps, (1)
+divide hotspots into intervals, (2) cluster hotspots spatially, and (3)
+update the memberships. These three steps will be described in details
+in the rest of the section.
 
 \textbf{1. Divide hotspots into intervals}
 
-Despite hotspot data can be represented in the three-dimensional
-Euclidean space and clustered using ordinary algorithms, like K-means,
-the clustering results could be highly sensitive to the scaling of the
-temporal dimension \citep{kisilevich2009spatio}. Besides, one of the
+Despite hotspot data can be clustered using ordinary algorithms, like
+K-means, in the three-dimensional Euclidean space, the clustering
+results could be highly sensitive to the scaling of the temporal
+dimension \citep{kisilevich2009spatio}. Besides, one of the
 characteristics of the hotspot data is cloud cover could lead to missing
-observations of a bushfire in several hours. It suggests that hotspots
-with long intervals may belong to the same bushfire. One possible
-solution to this issue is dividing hotspot data into intervals. In other
-words, the temporal dependence between hotspots is predetermined by a
-parameter \(ActiveTime\). The interpretation of \(ActiveTime\) is the
-time a fire can stay smouldering but undetectable by satellite before
-flaring up again.
+observations of a bushfire in several hours. This suggests that hotspots
+with long intervals may present connections. One possible solution to
+these two issues is to divide hotspot data into intervals then perform
+clustering spatially only, such that the temporal dependence between
+hotspots could be predetermined by a parameter \(ActiveTime\). The
+interpretation of \(ActiveTime\) is the time a fire can stay smouldering
+but undetectable by satellite before flaring up again.
 
-Given a certain value of \(ActiveTime\) and the length of the time frame
-\(T\), the algorithm will define several intervals,
+Given a certain value of \(ActiveTime\) and an integer length of the
+time frame \(T\), the algorithm will define several intervals,
 
 \[\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T\]
 
-,where \(T\) and \(t\) have the same unit as \(ActiveTime\).
+,where both \(T\) and \(t\) have the same unit as \(ActiveTime\).
 
 For example, if the dataset contains 48 hours of hotspot data and the
-\(ACtiveTime = 24~hours\), there will be 48 intervals,
-\(\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}\), where
+\(ACtiveTime = 24~hours\), there will be 48 intervals defined by the
+algorithm, \(\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}\),
+where
 
 \begin{align*}
 \boldsymbol{S}_1 &= [1,1]\\
@@ -163,7 +166,7 @@ Given a fixed value of \(AdjDist\) and the interval
   Recover the interval \(\boldsymbol{S}_t\) and record the memberships.
 \end{enumerate}
 
-Diagram \ref{fig:step2figs} shows an example of this step.
+Figure \ref{fig:step2figs} gives an concise example of this step.
 
 \begin{Schunk}
 \begin{figure}
@@ -201,7 +204,7 @@ This step starts from \(t=2\) till \(t=T\). Given the interval
   \(\boldsymbol{H}_s\).
 \end{enumerate}
 
-Diagram \ref{fig:step3figs} shows an example of this step.
+Figure \ref{fig:step3figs} gives an example of this step.
 
 \begin{Schunk}
 \begin{figure}
@@ -210,38 +213,45 @@ Diagram \ref{fig:step3figs} shows an example of this step.
 
 }
 
-\caption{An example of step 3. In this example, there are 30 hotspots in interval $\boldsymbol{S}_t$ (a) 20 out of 30 hotspots belong to both interval $\boldsymbol{S}_t$ and interval $\boldsymbol{S}_{t-1}$. These hotspots succeed their memberships from $\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\boldsymbol{S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\boldsymbol{S}_t$. }\label{fig:step3figs}
+\caption{An example of step 3. In this example, there are 30 hotspots belong to interval $\boldsymbol{S}_t$. (a) 20 out of 30 hotspots belong to both interval $\boldsymbol{S}_t$ and interval $\boldsymbol{S}_{t-1}$. These hotspots succeed their memberships from $\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\boldsymbol{S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\boldsymbol{S}_t$. }\label{fig:step3figs}
 \end{figure}
 \end{Schunk}
 
-\textbf{4. Compute ignition locations}
+\hypertarget{results}{%
+\subsubsection{Results}\label{results}}
 
-The previous step assigns all hotspots with updated memberships. Hence,
-the final step is to compute the ignition location for each cluster. If
-there are multiple earliest hotspots belong to the same cluster, the
-centroid of these hotspots is used as the ignition location. Otherwise,
-the earliest hotspot is used as the ignition location.
+The result of this spatiotemporal clustering algorithm applied on the
+hotspot data is a vector of memberships with length equals to 75936.
 
 \hypertarget{effects-of-parameter-choices}{%
 \subsubsection{Effects of parameter
 choices}\label{effects-of-parameter-choices}}
 
-There are two parameters that can be tuned in this algorithm, which are
-\(AdjDist\) and \(ActiveTime\). Increase \(AdjDist\) or the
-\(ActiveTime\) will usually reduce the number of clusters. However, if
-there are large gaps between clusters spatially and temporally, increase
-\(ActiveTime\) and \(AdjDist\) will not significantly reduce the number
-of clusters. Given one of the metrics to evaluate the goodness of the
-clustering is the gap between clusters, the optimal choice of
-\(AdjDist\) and \(ActiveTime\) can be chosen when they have minimum
-impact on the number of clusters. However, under this setting, the
-optimal \(ActiveTime\) and \(AdjDist\) will approach to infinitely as
-the number of clusters approach to 1. Hence, a restriction needs to be
-applied on this optimization. Increase of \(ActiveTime\) and \(AdjDist\)
-will only be allowed when there is a major fall of the number of
-clusters. Due to its similarity to determining the number of principal
-components to keep in a principal component analysis, a visualization
-tool is developed inspired by the scree plot.
+There are two parameters that being introduced in the outline of the
+algorithm, which are \(AdjDist\) and \(ActiveTime\). The optimal choice
+of these two parameters is not known but can be tuned using a
+visualization tool.
+
+Considering the relationships between \(AdjDist\), \(ActiveTime\) and
+the number of clusters in the clustering result, increase either
+\(AdjDist\) or \(ActiveTime\) will usually reduce the number of
+clusters. However, if there are large gaps between clusters spatially
+and temporally, increase these two parameters will not significantly
+reduce the number of clusters. Given one of the metrics to evaluate the
+goodness of the clustering result is the gap between clusters, the
+optimal choice of \(AdjDist\) and \(ActiveTime\) can be chosen when they
+have minimum impact on the number of clusters. However, under this
+setting, the optimal \(ActiveTime\) and \(AdjDist\) will approach to
+infinitely as the number of clusters approach to 1. Hence, a restriction
+needs to be applied on this optimization. Increase of \(ActiveTime\) and
+\(AdjDist\) will only be allowed when there is a major fall of the
+number of clusters. Based on this rule, a visualization tool inspired by
+the scree plot used in the principal component analysis is developed.
+Similar to the scree plot, users need to determine the \(ActiveTime\)
+and \(AdjDist\) to capture most of the decrease of the number of
+clusters. Figure \ref{fig:vis1} and \ref{fig:vis2} show the parameter
+tuning process by using this visualization tool. The final choice of
+\(ActiveTime\) is \(24\) hours and \(AdjDist\) is \(3000\) metres.
 
 \begin{Schunk}
 \begin{figure}
@@ -272,10 +282,13 @@ tool is developed inspired by the scree plot.
 \subsubsection{Determining the ignition point and time for individual
 fires}\label{determining-the-ignition-point-and-time-for-individual-fires}}
 
-By applying the spatiotemporal clustering algorithm on the hotspot data
-shown in Figure \ref{fig:hotspots}, bushfires can be identified and
-ignition locations can be computed. The corresponding clustering results
-are given in Figure \ref{fig:clusteringfinalresults}.
+Based on the clustering result, ignition location for each cluster can
+be computed. The strategy is to select the earliest hotspot of a cluster
+as its ignition point. Besides, if there are multiple earliest hotspots
+belong to the same cluster, the centroid of these hotspots is used as
+the ignition location. According to this method, ignition points over 6
+months are given in Figure \ref{fig:clusteringfinalresults} and Figure
+\ref{fig:app3}.
 
 \begin{Schunk}
 \begin{figure}
@@ -284,20 +297,7 @@ are given in Figure \ref{fig:clusteringfinalresults}.
 
 }
 
-\caption[A map shows the distribution of bushfire ignition locations in Victoria during 2019-2020 Australia bushfire season]{A map shows the distribution of bushfire ignition locations in Victoria during 2019-2020 Australia bushfire season.}\label{fig:clusteringfinalresults}
-\end{figure}
-\end{Schunk}
-
-Show ignition points for a particularly heavy day and another for a
-particularly light day
-
-\begin{Schunk}
-\begin{figure}
-
-{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/app2-1} 
-
-}
-
+\caption[ The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season]{ The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season.}\label{fig:clusteringfinalresults}
 \end{figure}
 \end{Schunk}
 
@@ -308,6 +308,7 @@ particularly light day
 
 }
 
+\caption[(a) Number of bushfires ignited from October 2019 to March 2020]{(a) Number of bushfires ignited from October 2019 to March 2020. (b) The distribution of the bushfire ignitions on a light day (c) and a heavy day. There are 3 ignitions on January 24, 2020 and 106 ignitions on December 18, 2019.}\label{fig:app3}
 \end{figure}
 \end{Schunk}
 
@@ -315,6 +316,13 @@ particularly light day
 \subsubsection{Tracking fire movement}\label{tracking-fire-movement}}
 
 Display showing how a fire moves over time, maybe two or more fires
+
+\begin{Schunk}
+
+
+\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-6-1} \end{center}
+
+\end{Schunk}
 
 \hypertarget{allocating-resources-for-future-fire-prevention}{%
 \subsubsection{Allocating resources for future fire

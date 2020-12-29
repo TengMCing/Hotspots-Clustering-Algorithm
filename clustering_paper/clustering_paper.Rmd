@@ -23,7 +23,6 @@ abstract: >
   An abstract of less than 150 words.
 preamble: |
   \newtheorem{defn}{Definition}
-  \usepackage{flafter}
 output: rticles::rjournal_article
 ---
 
@@ -46,6 +45,7 @@ library(ggpubr)
 library(rnaturalearth)
 library(lubridate)
 library(gridExtra)
+library(kableExtra)
 ```
 
 ```{r Run-Algorithm, include = FALSE}
@@ -83,26 +83,28 @@ This work addresses this topic. Using hotspot data, can we cluster in space and 
 
 This paper is organised as follows. The next section provides an introduction to the literature on spatiotemporal clustering and bushfire modeling and dynamics. Section [Algorithm] describes the clustering algorithm, and section [Application] illustrates how the resulting data can be used to study bushfire ignition. 
 
-<!--
-- What is the data, generic structure
-- Lit review: Spatio-temporal clustering. Algorithms for tracking movement.
-- Bushfire literature review?
--->
+
 
 ## Background
 
 literature review 
+
+<!--
+- What is the data, generic structure (what is satellite hotspot data)
+- Lit review: Spatio-temporal clustering. Algorithms for tracking movement.
+- Bushfire literature review?
+-->
 
 
 ## Algorithm 
 
 ### Data source
 
-This algorithm is initially developed in the research of 2019-2020 bushfires in Victoria, Australia. Therefore, the illustration of this algorithm will use hotspot data during 2019-2020 Australian bushfire season taken from Himawari-8 satellite [@jaxa]. This satellite hotpot dataset contains records of 1989572 hotspots for 6 months in the full disk of 140 \textdegree east longitude.
+The illustration of this algorithm will use the wild fire product (produced from Himawari-8) supplied by the P-Tree System, Japan Aerospace Exploration Agency (JAXA) [-@jaxa] as the data source. This wild fire product will be referred as the hotspot data in this paper. It contains records of 1989572 hotspots from October 2019 to March 2020 in the full disk of 140 \textdegree east longitude with 0.02 \textdegree spatial resolution and 10 minutes temporal resolution.
 
-The data pre-processing procedure includes selecting hotspots within the boundary of Victoria and filtering hotspots with a threshold (irradiance over 100 watts per square metre) suggested by @hotspots  to reduce noise from the background. 
+The data pre-processing procedure includes selecting hotspots within the boundary of Victoria and filtering hotspots with a threshold (irradiance over 100 watts per square metre) suggested by landscape ecologist and spatial scientist Dr. Grant Williamson [-@hotspots]  to reduce noise from the background.
 
-The final dataset contains 75936 hotspots with ID, longitude, latitude and observed date as fields. The map of this dataset is shown in Figure \ref{fig:hotspots}.
+The final hotspot dataset contains 75936 observations with ID, longitude, latitude and observed date as fields. The overall distribution of these hotspots is shown in Figure \ref{fig:hotspots}. 
 
  
 
@@ -115,7 +117,8 @@ hotspots$fire_id <- memberships$fire_id
 rm(memberships)
 ```
 
-```{r hotspots, fig.cap="A map shows the distribution of hotspots in Victoria during 2019-2020 Australia bushfire season."}
+
+```{r hotspots, fig.cap="The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season."}
 if (!file.exists("figures/before_clustering.png")){
   ggplot() +
   geom_sf(data = vic_map) +
@@ -131,20 +134,20 @@ knitr::include_graphics("figures/before_clustering.png")
 
 ### Steps
 
-The spatiotemporal clustering algorithm is consist of 4 steps, (1) divide hotspots into intervals, (2) cluster hotspots spatially, (3) update the memberships and (4) compute ignition locations. They will be described in details in the rest of the section. 
+The spatiotemporal clustering algorithm is consist of 3 steps, (1) divide hotspots into intervals, (2) cluster hotspots spatially, and (3) update the memberships. These three steps will be described in details in the rest of the section. 
 
 
 **1. Divide hotspots into intervals**
 
-Despite hotspot data can be represented in the three-dimensional Euclidean space and clustered using ordinary algorithms, like K-means, the clustering results could be highly sensitive to the scaling of the temporal dimension [@kisilevich2009spatio]. Besides, one of the characteristics of the hotspot data is cloud cover could lead to missing observations of a bushfire in several hours. It suggests that hotspots with long intervals may belong to the same bushfire. One possible solution to this issue is dividing hotspot data into intervals. In other words, the temporal dependence between hotspots is predetermined by a parameter $ActiveTime$. The interpretation of $ActiveTime$ is the time a fire can stay smouldering but undetectable by satellite before flaring up again. 
+Despite hotspot data can be clustered using ordinary algorithms, like K-means, in the three-dimensional Euclidean space, the clustering results could be highly sensitive to the scaling of the temporal dimension [@kisilevich2009spatio]. Besides, one of the characteristics of the hotspot data is cloud cover could lead to missing observations of a bushfire in several hours. This suggests that hotspots with long intervals may present connections. One possible solution to these two issues is to divide hotspot data into intervals then perform clustering spatially only, such that the temporal dependence between hotspots could be predetermined by a parameter $ActiveTime$. The interpretation of $ActiveTime$ is the time a fire can stay smouldering but undetectable by satellite before flaring up again. 
 
-Given a certain value of $ActiveTime$ and the length of the time frame $T$, the algorithm will define several intervals,
+Given a certain value of $ActiveTime$ and an integer length of the time frame $T$, the algorithm will define several intervals,
 
 $$\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T$$
 
-,where $T$ and $t$ have the same unit as $ActiveTime$. 
+,where both $T$ and $t$ have the same unit as $ActiveTime$. 
 
-For example, if the dataset contains 48 hours of hotspot data and the $ACtiveTime = 24~hours$, there will be 48 intervals, $\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}$, where
+For example, if the dataset contains 48 hours of hotspot data and the $ACtiveTime = 24~hours$, there will be 48 intervals defined by the algorithm, $\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}$, where
 
 \begin{align*}
 \boldsymbol{S}_1 &= [1,1]\\
@@ -176,7 +179,7 @@ Given a fixed value of $AdjDist$ and the interval $\boldsymbol{S}_t$, the algori
 (f) Recover the interval $\boldsymbol{S}_t$ and record the memberships.
 
 
-Diagram \ref{fig:step2figs} shows an example of this step.
+Figure \ref{fig:step2figs} gives an concise example of this step.
 
 ```{r step2figs, fig.cap="An example of step 2 given 20 hotspots in interval $\\boldsymbol{S}_t$. (a) A hotspot is selected randomly as the first item of list $\\boldsymbol{L}$ and the pointer $\\boldsymbol{P}$. Hotspots in list $\\boldsymbol{L}$ are in red. Pointer $\\boldsymbol{P}$ is drawn with larger marker size. (b) Nearby hotspots of the pointer $\\boldsymbol{P}$ are appended to the list $\\boldsymbol{L}$. (c) Move pointer $\\boldsymbol{P}$ to the next item of list $\\boldsymbol{L}$ and append the nearby hotspots to list $\\boldsymbol{L}$. (d) The first cluster is identified via repeating substep (c). (e) Clear the list $\\boldsymbol{L}$, then randomly select an unassigned hotspot to identify another cluster. (f) The final clustering result is produced via repeating substep (d). The labels show the cluster each hotspot belongs to."}
 
@@ -352,7 +355,7 @@ This step starts from $t=2$ till $t=T$. Given the interval $\boldsymbol{S}_t$, t
 
 (b) Set $\boldsymbol{H}_c = \{h_c^1,h_c^2,...\}$, where $h_c^i$ is the $i$th hotspot in set $\boldsymbol{H}_c$. $h_c^i$ belongs to $\boldsymbol{S}_t$ but does not belong to $\boldsymbol{S}_{t-1}$. If $h_c^i$ being clustered into the same component with $h_s^j$ in interval $\boldsymbol{S}_t$, $h_c^i$ succeeds the membership from the nearest $h_s^j$, where $h_s^j$ is the $j$th hotspot in set $\boldsymbol{H}_s$. 
 
-Diagram \ref{fig:step3figs} shows an example of this step.
+Figure \ref{fig:step3figs} gives an example of this step.
 
 ```{r}
 point_cols2 <- rep("a", 30)
@@ -430,7 +433,7 @@ ggplot(data = mutate(points_2, group = rep("", 30))) +
 
 
 
-```{r step3figs, fig.cap = "An example of step 3. In this example, there are 30 hotspots in interval $\\boldsymbol{S}_t$ (a) 20 out of 30 hotspots belong to both interval $\\boldsymbol{S}_t$ and interval $\\boldsymbol{S}_{t-1}$. These hotspots succeed their memberships from $\\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\\boldsymbol{S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\\boldsymbol{S}_t$. "}
+```{r step3figs, fig.cap = "An example of step 3. In this example, there are 30 hotspots belong to interval $\\boldsymbol{S}_t$. (a) 20 out of 30 hotspots belong to both interval $\\boldsymbol{S}_t$ and interval $\\boldsymbol{S}_{t-1}$. These hotspots succeed their memberships from $\\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\\boldsymbol{S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\\boldsymbol{S}_t$. "}
 ggplot() +
   geom_text(data = points_2, aes(x, y, label = c(point_cols, 4, 2, 4, 4, 2, 2, 2, 4, 4, 2) , col = c(1:30)<=20)) +
   coord_fixed() +
@@ -447,14 +450,17 @@ ggplot() +
 
 (p5 + p3 + p4)
 ```
+### Results
 
-**4. Compute ignition locations**
+The result of this spatiotemporal clustering algorithm applied on the hotspot data is a vector of memberships with length equals to 75936.
 
-The previous step assigns all hotspots with updated memberships. Hence, the final step is to compute the ignition location for each cluster. If there are multiple earliest hotspots belong to the same cluster, the centroid of these hotspots is used as the ignition location. Otherwise, the earliest hotspot is used as the ignition location.   
+  
 
 ### Effects of parameter choices
 
-There are two parameters that can be tuned in this algorithm, which are $AdjDist$ and $ActiveTime$. Increase $AdjDist$ or the $ActiveTime$ will usually reduce the number of clusters. However, if there are large gaps between clusters spatially and temporally, increase $ActiveTime$ and $AdjDist$ will not significantly reduce the number of clusters. Given one of the metrics to evaluate the goodness of the clustering is the gap between clusters, the optimal choice of $AdjDist$ and $ActiveTime$ can be chosen when they have minimum impact on the number of clusters. However, under this setting, the optimal $ActiveTime$ and $AdjDist$ will approach to infinitely as the number of clusters approach to 1. Hence, a restriction needs to be applied on this optimization. Increase of $ActiveTime$ and $AdjDist$ will only be allowed when there is a major fall of the number of clusters. Due to its similarity to determining the number of principal components to keep in a principal component analysis, a visualization tool is developed inspired by the scree plot. 
+There are two parameters that being introduced in the outline of the algorithm, which are $AdjDist$ and $ActiveTime$. The optimal choice of these two parameters is not known but can be tuned using a visualization tool.
+
+Considering the relationships between $AdjDist$, $ActiveTime$ and the number of clusters in the clustering result, increase either $AdjDist$ or $ActiveTime$ will usually reduce the number of clusters. However, if there are large gaps between clusters spatially and temporally, increase these two parameters will not significantly reduce the number of clusters. Given one of the metrics to evaluate the goodness of the clustering result is the gap between clusters, the optimal choice of $AdjDist$ and $ActiveTime$ can be chosen when they have minimum impact on the number of clusters. However, under this setting, the optimal $ActiveTime$ and $AdjDist$ will approach to infinitely as the number of clusters approach to 1. Hence, a restriction needs to be applied on this optimization. Increase of $ActiveTime$ and $AdjDist$ will only be allowed when there is a major fall of the number of clusters. Based on this rule, a visualization tool inspired by the scree plot used in the principal component analysis is developed. Similar to the scree plot, users need to determine the $ActiveTime$ and $AdjDist$ to capture most of the decrease of the number of clusters. Figure \ref{fig:vis1} and \ref{fig:vis2} show the parameter tuning process by using this visualization tool. The final choice of $ActiveTime$ is $24$ hours and $AdjDist$ is $3000$ metres.
 
 
 ```{r vis1, fig.cap="A visualization tool for parameter tuning . It works like a scree plot. Major falls of the number of clusters are observed when $AdjDist < 3000$ so the reasonable choice of $AdjDist$ is 3000m."}
@@ -471,9 +477,10 @@ knitr::include_graphics("figures/clustering_tuning_2.jpeg")
 
 ### Determining the ignition point and time for individual fires
 
-By applying the spatiotemporal clustering algorithm on the hotspot data shown in Figure \ref{fig:hotspots}, bushfires can be identified and ignition locations can be computed. The corresponding clustering results are given in Figure \ref{fig:clusteringfinalresults}.
+Based on the clustering result, ignition location for each cluster can be computed. The strategy is to select the earliest hotspot of a cluster as its ignition point. Besides, if there are multiple earliest hotspots belong to the same cluster, the centroid of these hotspots is used as the ignition location. According to this method, ignition points over 6 months are given in Figure \ref{fig:clusteringfinalresults} and Figure \ref{fig:app3}. 
 
-```{r clusteringfinalresults, fig.cap="A map shows the distribution of bushfire ignition locations in Victoria during 2019-2020 Australia bushfire season."}
+
+```{r clusteringfinalresults, fig.cap=" The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season."}
 hotspots %>%
   group_by(fire_id) %>%
   summarise(hour_id = min(hour_id)) %>%
@@ -483,40 +490,75 @@ ignition <- left_join(temp, hotspots) %>%
   group_by(fire_id) %>%
   summarise(time = mean(`#obstime`), lon = mean(lon), lat = mean(lat))
 
+ignition <- mutate(ignition, year = year(time), month = month(time), day = day(time))
+
 ggplot(ignition) +
   geom_sf(data = vic_map) +
-  geom_point(aes(lon, lat)) +
-  theme_map()
-  
+  geom_point(aes(lon, lat), alpha = 0.3) +
+  theme_map() -> p1
+
+p1  
 ```
 
-<center> <em> Show ignition points for a particularly heavy day and another for a particularly light day </em> </center>
+
+```{r ignitionbar}
+ignition %>%
+  group_by(year, month) %>%
+  count() %>%
+  ggplot() +
+  geom_line(aes(factor(month.abb[month], levels = c("Oct", "Nov", "Dec", "Jan", "Feb", "Mar")), n, group = 1)) +
+  xlab("Month") +
+  ylab("Count") +
+  labs(tag = "(a)") +
+  theme_bw() -> p3
+```
+
 
 ```{r}
-ignition <- mutate(ignition, year = year(time), month = month(time), day = day(time))
-```
-
-```{r app2, fig.cap=""}
 # light
 filter(ignition, year == 2020, month == 1, day == 24) %>%
 ggplot() +
   geom_sf(data = vic_map) +
-  geom_point(aes(lon, lat)) +
-  ggtitle("2020.01.24")
+  geom_point(aes(lon, lat), alpha = 0.6) +
+  ggtitle("2020.01.24") +
+  labs(tag = "(b)") +
+  theme_map() -> p1
 ```
-```{r app3, fig.cap=""}
+
+
+```{r app3, fig.cap="(a) Number of bushfires ignited from October 2019 to March 2020. (b) The distribution of the bushfire ignitions on a light day (c) and a heavy day. There are 3 ignitions on January 24, 2020 and 106 ignitions on December 18, 2019."}
 # heavy
 filter(ignition, year == 2019, month == 12, day == 18) %>%
 ggplot() +
   geom_sf(data = vic_map) +
-  geom_point(aes(lon, lat)) +
-  ggtitle("2019.12.18")
+  geom_point(aes(lon, lat), alpha = 0.6) +
+  ggtitle("2019.12.18") +
+  labs(tag = "(c)") +
+  theme_map() -> p2
+
+p3 / (p1 + p2)
 ```
 
 
 ### Tracking fire movement
 
 <center> <em> Display showing how a fire moves over time, maybe two or more fires </em> </center>
+
+
+
+
+```{r}
+ggplot(filter(hotspots, fire_id %in% c(99, 100, 101))) +
+  geom_jitter(aes(lon, lat, col = as.character(fire_id))) +
+  facet_wrap(~as.Date(dettime)) +
+  theme_map() +
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Dark2") +
+  labs(color = "Fire ID")
+```
+
+
+
 
 
 ### Allocating resources for future fire prevention
