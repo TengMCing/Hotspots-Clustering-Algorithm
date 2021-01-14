@@ -121,7 +121,7 @@ rm(memberships)
 ```{r hotspots, fig.cap="The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season."}
 if (!file.exists("figures/before_clustering.png")){
   ggplot() +
-  geom_sf(data = vic_map) +
+  geom_sf(data = vic_map, col = NA) +
   geom_point(data = hotspots, aes(lon, lat), alpha = 0.3) +
   theme_map() -> p
 
@@ -493,7 +493,7 @@ ignition <- left_join(temp, hotspots) %>%
 ignition <- mutate(ignition, year = year(time), month = month(time), day = day(time))
 
 ggplot(ignition) +
-  geom_sf(data = vic_map) +
+  geom_sf(data = vic_map, col = NA) +
   geom_point(aes(lon, lat), alpha = 0.3) +
   theme_map() -> p1
 
@@ -518,7 +518,7 @@ ignition %>%
 # light
 filter(ignition, year == 2020, month == 1, day == 24) %>%
 ggplot() +
-  geom_sf(data = vic_map) +
+  geom_sf(data = vic_map, col = NA) +
   geom_point(aes(lon, lat), alpha = 0.6) +
   ggtitle("2020.01.24") +
   labs(tag = "(b)") +
@@ -530,7 +530,7 @@ ggplot() +
 # heavy
 filter(ignition, year == 2019, month == 12, day == 18) %>%
 ggplot() +
-  geom_sf(data = vic_map) +
+  geom_sf(data = vic_map, col = NA) +
   geom_point(aes(lon, lat), alpha = 0.6) +
   ggtitle("2019.12.18") +
   labs(tag = "(c)") +
@@ -547,11 +547,89 @@ p3 / (p1 + p2)
 
 
 
-```{r}
-ggplot(filter(hotspots, fire_id %in% c(99, 100, 101))) +
-  geom_jitter(aes(lon, lat, col = as.character(fire_id))) +
-  facet_wrap(~as.Date(dettime)) +
-  theme_map() +
+```{r fig.height=8}
+tarid <- c(300)
+
+add_lag_cen <- function(x, times = 10) {
+  for (i in 2:times) {
+    x <- mutate(x, "cen_lon_{i}" := lag(!!sym(paste0("cen_lon_", i-1)))) %>%
+      mutate("cen_lat_{i}" := lag(!!sym(paste0("cen_lat_", i-1))))
+  }
+  
+  x
+  
+}
+
+hotspots %>%
+  select(fire_id, dettime, lon, lat) %>%
+  filter(fire_id %in% c(tarid)) %>%
+  mutate(new_date = as.character(floor_date(dettime, unit = "12 hours"))) %>%
+  group_by(fire_id, new_date) %>%
+  summarise(cen_lon = mean(lon), cen_lat = mean(lat)) %>%
+  group_by(fire_id) %>%
+  mutate(cen_lon_1 = lag(cen_lon), cen_lat_1 = lag(cen_lat)) %>%
+  add_lag_cen(30) -> cen
+
+hotspots %>%
+  select(fire_id, dettime, lon, lat) %>%
+  filter(fire_id %in% c(tarid)) %>%
+  mutate(new_date = as.character(floor_date(dettime, unit = "12 hours"))) %>%
+  left_join(cen) %>%
+ggplot() +
+  geom_jitter(aes(lon, lat, col = as.character(fire_id)), alpha = 0.3) +
+  geom_point(aes(cen_lon, cen_lat), col = "red", size = 1.2) +
+  # geom_point(aes(cen_lon_1, cen_lat_1), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_2, cen_lat_2), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_3, cen_lat_3), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_4, cen_lat_4), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_5, cen_lat_5), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_6, cen_lat_6), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_7, cen_lat_7), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_8, cen_lat_8), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_9, cen_lat_9), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_10, cen_lat_10), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_11, cen_lat_11), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_12, cen_lat_12), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_13, cen_lat_13), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_14, cen_lat_14), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_15, cen_lat_15), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_16, cen_lat_16), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_17, cen_lat_17), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_18, cen_lat_18), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_19, cen_lat_19), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_20, cen_lat_20), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_21, cen_lat_21), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_22, cen_lat_22), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_23, cen_lat_23), col = "blue", size = 1) +
+  # geom_point(aes(cen_lon_24, cen_lat_24), col = "blue", size = 1) +
+  
+  geom_segment(aes(cen_lon, cen_lat, xend = cen_lon_1, yend = cen_lat_1)) +
+  geom_segment(aes(cen_lon_1, cen_lat_1, xend = cen_lon_2, yend = cen_lat_2)) +
+  geom_segment(aes(cen_lon_2, cen_lat_2, xend = cen_lon_3, yend = cen_lat_3)) +
+  geom_segment(aes(cen_lon_3, cen_lat_3, xend = cen_lon_4, yend = cen_lat_4)) +
+  geom_segment(aes(cen_lon_4, cen_lat_4, xend = cen_lon_5, yend = cen_lat_5)) +
+  geom_segment(aes(cen_lon_5, cen_lat_5, xend = cen_lon_6, yend = cen_lat_6)) +
+  geom_segment(aes(cen_lon_6, cen_lat_6, xend = cen_lon_7, yend = cen_lat_7)) +
+  geom_segment(aes(cen_lon_7, cen_lat_7, xend = cen_lon_8, yend = cen_lat_8)) +
+  geom_segment(aes(cen_lon_8, cen_lat_8, xend = cen_lon_9, yend = cen_lat_9)) +
+  geom_segment(aes(cen_lon_9, cen_lat_9, xend = cen_lon_10, yend = cen_lat_10)) +
+  geom_segment(aes(cen_lon_10, cen_lat_10, xend = cen_lon_11, yend = cen_lat_11)) +
+  geom_segment(aes(cen_lon_11, cen_lat_11, xend = cen_lon_12, yend = cen_lat_12)) +
+  geom_segment(aes(cen_lon_12, cen_lat_12, xend = cen_lon_13, yend = cen_lat_13)) +
+  geom_segment(aes(cen_lon_13, cen_lat_13, xend = cen_lon_14, yend = cen_lat_14)) +
+  geom_segment(aes(cen_lon_14, cen_lat_14, xend = cen_lon_15, yend = cen_lat_15)) +
+  geom_segment(aes(cen_lon_15, cen_lat_15, xend = cen_lon_16, yend = cen_lat_16)) +
+  geom_segment(aes(cen_lon_16, cen_lat_16, xend = cen_lon_17, yend = cen_lat_17)) +
+  geom_segment(aes(cen_lon_17, cen_lat_17, xend = cen_lon_18, yend = cen_lat_18)) +
+  geom_segment(aes(cen_lon_18, cen_lat_18, xend = cen_lon_19, yend = cen_lat_19)) +
+  geom_segment(aes(cen_lon_19, cen_lat_19, xend = cen_lon_20, yend = cen_lat_20)) +
+  geom_segment(aes(cen_lon_20, cen_lat_20, xend = cen_lon_21, yend = cen_lat_21)) +
+  geom_segment(aes(cen_lon_21, cen_lat_21, xend = cen_lon_22, yend = cen_lat_22)) +
+  geom_segment(aes(cen_lon_22, cen_lat_22, xend = cen_lon_23, yend = cen_lat_23)) +
+  geom_segment(aes(cen_lon_23, cen_lat_23, xend = cen_lon_24, yend = cen_lat_24)) +
+  geom_segment(aes(cen_lon_24, cen_lat_24, xend = cen_lon_25, yend = cen_lat_25)) +
+  facet_wrap(~new_date) +
+  theme_bw(base_size = 10) +
   theme(legend.position = "bottom") +
   scale_color_brewer(palette = "Dark2") +
   labs(color = "Fire ID")
