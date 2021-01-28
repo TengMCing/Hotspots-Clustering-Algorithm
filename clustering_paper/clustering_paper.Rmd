@@ -4,11 +4,10 @@ author:
   - name: Weihao Li
     affiliation: Monash University
     address:
-    - line 1
-    - line 2
+    - Econometrics and Business Statistics
     email:  wlii0039@student.monash.edu
   - name: Emily Dodwell
-    affiliation: AT&T
+    affiliation: ??
     address:
     - line 1
     - line 2
@@ -16,8 +15,7 @@ author:
   - name: Dianne Cook
     affiliation: Monash University
     address:
-    - line 1
-    - line 2
+    - Econometrics and Business Statistics
     email:  dicook@monash.edu
 abstract: >
   An abstract of less than 150 words.
@@ -79,7 +77,7 @@ Bushfires are a major problem for Australia, and many other parts of the globe. 
 
 Contributing to the problem is that many fires started in very remote areas, locations deep into the temperate forests ignited by lightning, that are virtually impossible to access or to monitor. Satellite data provides a possible solution to this, particularly remotely sensed hotspot data, which may be useful in detecting new ignitions and movements of fires. Understanding fires in remote areas using satellite data may provide some help in developing effective strategies for mitigating bushfire impact. 
 
-This work addresses this topic. Using hotspot data, can we cluster in space and time, in order to determine (1) points of ignition and (2) track the movement of bushfires. 
+This work addresses this topic. Using hotspot data, can we cluster in space and time, in order to determine (1) points of ignition and (2) track the movement of bushfires. The algorithm is implemented in the R package \CRANpkg{spotoroo}.
 
 This paper is organised as follows. The next section provides an introduction to the literature on spatiotemporal clustering and bushfire modeling and dynamics. Section [Algorithm] describes the clustering algorithm, and section [Application] illustrates how the resulting data can be used to study bushfire ignition. 
 
@@ -642,6 +640,69 @@ ggplot() +
 ### Allocating resources for future fire prevention
 
 Merging data with camp sites, CFA, roads, ... 
+
+## Implementation
+
+The algorithm is available in the R package \pkg{spotoroo}.
+
+### Installation
+
+The package can be installed from CRAN using 
+
+```
+install.packages("spotoroo")
+```
+
+and the developmental version from github using
+
+```
+install.packages("remotes")
+remotes::install_github("TengMCing/spotoroo")
+```
+
+### Usage
+
+A sample data set is provided with the package, to illustrate its use.  The function `hotspot_cluster` performs the spatial clustering. Here we have called it fir the sample data, specifying the spatial and temporal variables (lon, lat, obsTime), and several parameters to the algorithm. A summary of the results is printed when the algorithm completes. 
+
+```{r eval=TRUE, echo=TRUE}
+library(spotoroo)
+library(tidyverse)
+result <- hotspot_cluster(hotspots_fin,
+                          lon = "lon",
+                          lat = "lat",
+                          obsTime = "obsTime",
+                          activeTime = 24,
+                          adjDist = 3000,
+                          minPts = 4,
+                          minTime = 3,
+                          ignitionCenter = "mean",
+                          timeUnit = "h",
+                          timeStep = 1)
+```
+
+For this sample of data, the result contains `r length(unique(result$))
+
+```{r fig.cap="Automatic plot of results"}
+plot(result, bg = plot_vic_map())
+```
+
+```{r out.width = "70%", out.height="70%"}
+plot(result,
+     type = "mov",
+     cluster = 1:6,
+     step = 6,
+     hotspot = TRUE,
+     bg = plot_vic_map())
+```
+
+```{r out.width = "70%", out.height="70%"}
+plot(result, "timeline", 
+     dateLabel = "%b %d", 
+     mainBreak = "1 week", 
+     minorBreak = "1 day")
+```
+
+### Functions
 
 ## Summary
 

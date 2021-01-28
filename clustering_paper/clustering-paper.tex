@@ -33,7 +33,8 @@ mitigating bushfire impact.
 
 This work addresses this topic. Using hotspot data, can we cluster in
 space and time, in order to determine (1) points of ignition and (2)
-track the movement of bushfires.
+track the movement of bushfires. The algorithm is implemented in the R
+package \CRANpkg{spotoroo}.
 
 This paper is organised as follows. The next section provides an
 introduction to the literature on spatiotemporal clustering and bushfire
@@ -330,6 +331,85 @@ prevention}\label{allocating-resources-for-future-fire-prevention}}
 
 Merging data with camp sites, CFA, roads, \ldots{}
 
+\hypertarget{implementation}{%
+\subsection{Implementation}\label{implementation}}
+
+The algorithm is available in the R package \pkg{spotoroo}.
+
+\hypertarget{installation}{%
+\subsubsection{Installation}\label{installation}}
+
+The package can be installed from CRAN using
+
+\begin{verbatim}
+install.packages("spotoroo")
+\end{verbatim}
+
+and the developmental version from github using
+
+\begin{verbatim}
+install.packages("remotes")
+remotes::install_github("TengMCing/spotoroo")
+\end{verbatim}
+
+\hypertarget{usage}{%
+\subsubsection{Usage}\label{usage}}
+
+A sample data set is provided with the package, to illustrate its use.
+The function \texttt{hotspot\_cluster} performs the spatial clustering.
+Here we have called it fir the sample data, specifying the spatial and
+temporal variables (lon, lat, obsTime), and several parameters to the
+algorithm. A summary of the results is printed when the algorithm
+completes.
+
+\begin{Schunk}
+\begin{Sinput}
+library(spotoroo)
+library(tidyverse)
+result <- hotspot_cluster(hotspots_fin,
+                          lon = "lon",
+                          lat = "lat",
+                          obsTime = "obsTime",
+                          activeTime = 24,
+                          adjDist = 3000,
+                          minPts = 4,
+                          minTime = 3,
+                          ignitionCenter = "mean",
+                          timeUnit = "h",
+                          timeStep = 1)
+\end{Sinput}
+\end{Schunk}
+
+For this sample of data, the result contains `r length(unique(result\$))
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-8-1} 
+
+}
+
+\caption[Automatic plot of results]{Automatic plot of results}\label{fig:unnamed-chunk-8}
+\end{figure}
+\end{Schunk}
+
+\begin{Schunk}
+
+
+\begin{center}\includegraphics[width=0.7\linewidth,height=0.7\textheight]{clustering_paper_files/figure-latex/unnamed-chunk-9-1} \end{center}
+
+\end{Schunk}
+
+\begin{Schunk}
+
+
+\begin{center}\includegraphics[width=0.7\linewidth,height=0.7\textheight]{clustering_paper_files/figure-latex/unnamed-chunk-10-1} \end{center}
+
+\end{Schunk}
+
+\hypertarget{functions}{%
+\subsubsection{Functions}\label{functions}}
+
 \hypertarget{summary}{%
 \subsection{Summary}\label{summary}}
 
@@ -350,7 +430,7 @@ Merging data with camp sites, CFA, roads, \ldots{}
 \address{%
 Weihao Li\\
 Monash University\\%
-line 1\\ line 2\\
+Econometrics and Business Statistics\\
 %
 %
 %
@@ -359,7 +439,7 @@ line 1\\ line 2\\
 
 \address{%
 Emily Dodwell\\
-AT\&T\\%
+??\\%
 line 1\\ line 2\\
 %
 %
@@ -370,7 +450,7 @@ line 1\\ line 2\\
 \address{%
 Dianne Cook\\
 Monash University\\%
-line 1\\ line 2\\
+Econometrics and Business Statistics\\
 %
 %
 %
