@@ -1,0 +1,83 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\bibstyle{abbrvnat}
+\citation{jaxa}
+\citation{hotspots}
+\citation{kisilevich2009spatio}
+\@writefile{toc}{\contentsline {chapter}{\numberline {1}A clustering algorithm to organize satellite hotspots data for the purpose of tracking bushfires remotely}{1}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.1}Introduction}{1}{subsection.2.0.1}\protected@file@percent }
+\newlabel{introduction}{{2.0.1}{1}{Introduction}{subsection.2.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.2}Background}{1}{subsection.2.0.2}\protected@file@percent }
+\newlabel{background}{{2.0.2}{1}{Background}{subsection.2.0.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.3}Algorithm}{1}{subsection.2.0.3}\protected@file@percent }
+\newlabel{algorithm}{{2.0.3}{1}{Algorithm}{subsection.2.0.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Data source}{1}{subsection.2.0.3}\protected@file@percent }
+\newlabel{data-source}{{2.0.3}{1}{Data source}{subsection.2.0.3}{}}
+\@writefile{brf}{\backcite{jaxa}{{1}{2.0.3}{subsection.2.0.3}}}
+\@writefile{brf}{\backcite{hotspots}{{1}{2.0.3}{subsection.2.0.3}}}
+\@writefile{toc}{\contentsline {subsubsection}{Steps}{1}{figure.caption.2}\protected@file@percent }
+\newlabel{steps}{{2.0.3}{1}{Steps}{figure.caption.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season}}{2}{figure.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:hotspots}{{1}{2}{The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season}{figure.caption.2}{}}
+\@writefile{brf}{\backcite{kisilevich2009spatio}{{2}{2.0.3}{figure.caption.2}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces An example of step 2 given 20 hotspots in interval $\boldsymbol  {S}_t$. (a) A hotspot is selected randomly as the first item of list $\boldsymbol  {L}$ and the pointer $\boldsymbol  {P}$. Hotspots in list $\boldsymbol  {L}$ are in red. Pointer $\boldsymbol  {P}$ is drawn with larger marker size. (b) Nearby hotspots of the pointer $\boldsymbol  {P}$ are appended to the list $\boldsymbol  {L}$. (c) Move pointer $\boldsymbol  {P}$ to the next item of list $\boldsymbol  {L}$ and append the nearby hotspots to list $\boldsymbol  {L}$. (d) The first cluster is identified via repeating substep (c). (e) Clear the list $\boldsymbol  {L}$, then randomly select an unassigned hotspot to identify another cluster. (f) The final clustering result is produced via repeating substep (d). The labels show the cluster each hotspot belongs to.\relax }}{3}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:step2figs}{{2}{3}{An example of step 2 given 20 hotspots in interval $\boldsymbol {S}_t$. (a) A hotspot is selected randomly as the first item of list $\boldsymbol {L}$ and the pointer $\boldsymbol {P}$. Hotspots in list $\boldsymbol {L}$ are in red. Pointer $\boldsymbol {P}$ is drawn with larger marker size. (b) Nearby hotspots of the pointer $\boldsymbol {P}$ are appended to the list $\boldsymbol {L}$. (c) Move pointer $\boldsymbol {P}$ to the next item of list $\boldsymbol {L}$ and append the nearby hotspots to list $\boldsymbol {L}$. (d) The first cluster is identified via repeating substep (c). (e) Clear the list $\boldsymbol {L}$, then randomly select an unassigned hotspot to identify another cluster. (f) The final clustering result is produced via repeating substep (d). The labels show the cluster each hotspot belongs to.\relax }{figure.caption.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Results}{3}{figure.caption.4}\protected@file@percent }
+\newlabel{results}{{2.0.3}{3}{Results}{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces An example of step 3. In this example, there are 30 hotspots belong to interval $\boldsymbol  {S}_t$. (a) 20 out of 30 hotspots belong to both interval $\boldsymbol  {S}_t$ and interval $\boldsymbol  {S}_{t-1}$. These hotspots succeed their memberships from $\boldsymbol  {S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\boldsymbol  {S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\boldsymbol  {S}_t$. \relax }}{4}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:step3figs}{{3}{4}{An example of step 3. In this example, there are 30 hotspots belong to interval $\boldsymbol {S}_t$. (a) 20 out of 30 hotspots belong to both interval $\boldsymbol {S}_t$ and interval $\boldsymbol {S}_{t-1}$. These hotspots succeed their memberships from $\boldsymbol {S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\boldsymbol {S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\boldsymbol {S}_t$. \relax }{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces A visualization tool for parameter tuning }}{4}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:vis1}{{4}{4}{A visualization tool for parameter tuning}{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Effects of parameter choices}{4}{figure.caption.4}\protected@file@percent }
+\newlabel{effects-of-parameter-choices}{{2.0.3}{4}{Effects of parameter choices}{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours}}{5}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:vis2}{{5}{5}{Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.4}Application}{5}{subsection.2.0.4}\protected@file@percent }
+\newlabel{application}{{2.0.4}{5}{Application}{subsection.2.0.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Determining the ignition point and time for individual fires}{5}{subsection.2.0.4}\protected@file@percent }
+\newlabel{determining-the-ignition-point-and-time-for-individual-fires}{{2.0.4}{5}{Determining the ignition point and time for individual fires}{subsection.2.0.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Tracking fire movement}{5}{figure.caption.8}\protected@file@percent }
+\newlabel{tracking-fire-movement}{{2.0.4}{5}{Tracking fire movement}{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces  The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season}}{6}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:clusteringfinalresults}{{6}{6}{The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season}{figure.caption.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces (a) Number of bushfires ignited from October 2019 to March 2020}}{6}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:app3}{{7}{6}{(a) Number of bushfires ignited from October 2019 to March 2020}{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Allocating resources for future fire prevention}{7}{figure.caption.8}\protected@file@percent }
+\newlabel{allocating-resources-for-future-fire-prevention}{{2.0.4}{7}{Allocating resources for future fire prevention}{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.5}Implementation}{7}{subsection.2.0.5}\protected@file@percent }
+\newlabel{implementation}{{2.0.5}{7}{Implementation}{subsection.2.0.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Installation}{7}{subsection.2.0.5}\protected@file@percent }
+\newlabel{installation}{{2.0.5}{7}{Installation}{subsection.2.0.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Usage}{7}{subsection.2.0.5}\protected@file@percent }
+\newlabel{usage}{{2.0.5}{7}{Usage}{subsection.2.0.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Automatic plot of results}}{9}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:unnamed-chunk-8}{{8}{9}{Automatic plot of results}{figure.caption.9}{}}
+\bibdata{RJreferences}
+\bibcite{kisilevich2009spatio}{{1}{2009}{{Kisilevich et~al.}}{{Kisilevich, Mansmann, Nanni, and Rinzivillo}}}
+\bibcite{jaxa}{{2}{2020}{{P-Tree System}}{{}}}
+\bibcite{hotspots}{{3}{2020}{{Williamson}}{{}}}
+\@writefile{toc}{\contentsline {subsubsection}{Functions}{10}{figure.caption.9}\protected@file@percent }
+\newlabel{functions}{{2.0.5}{10}{Functions}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.6}Summary}{10}{subsection.2.0.6}\protected@file@percent }
+\newlabel{summary}{{2.0.6}{10}{Summary}{subsection.2.0.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.7}Acknowledgements}{10}{subsection.2.0.7}\protected@file@percent }
+\newlabel{acknowledgements}{{2.0.7}{10}{Acknowledgements}{subsection.2.0.7}{}}
+\ttl@finishall
+\gdef \@abspage@last{11}

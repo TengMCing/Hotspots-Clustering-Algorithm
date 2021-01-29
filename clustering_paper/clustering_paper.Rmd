@@ -664,7 +664,7 @@ remotes::install_github("TengMCing/spotoroo")
 
 A sample data set is provided with the package, to illustrate its use.  The function `hotspot_cluster` performs the spatial clustering. Here we have called it fir the sample data, specifying the spatial and temporal variables (lon, lat, obsTime), and several parameters to the algorithm. A summary of the results is printed when the algorithm completes. 
 
-```{r eval=TRUE, echo=TRUE}
+```{r eval=TRUE, echo=TRUE, message=TRUE}
 library(spotoroo)
 library(tidyverse)
 result <- hotspot_cluster(hotspots_fin,
@@ -686,7 +686,7 @@ For this sample of data, the result contains `r length(unique(result$))
 plot(result, bg = plot_vic_map())
 ```
 
-```{r out.width = "70%", out.height="70%"}
+```{r out.width = "100%"}
 plot(result,
      type = "mov",
      cluster = 1:6,
@@ -695,7 +695,7 @@ plot(result,
      bg = plot_vic_map())
 ```
 
-```{r out.width = "70%", out.height="70%"}
+```{r out.width = "100%"}
 plot(result, "timeline", 
      dateLabel = "%b %d", 
      mainBreak = "1 week", 

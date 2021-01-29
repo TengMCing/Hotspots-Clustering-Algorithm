@@ -365,6 +365,17 @@ completes.
 \begin{Schunk}
 \begin{Sinput}
 library(spotoroo)
+\end{Sinput}
+\begin{Soutput}
+#> 
+#> Attaching package: 'spotoroo'
+\end{Soutput}
+\begin{Soutput}
+#> The following objects are masked _by_ '.GlobalEnv':
+#> 
+#>     hotspots, vic_map
+\end{Soutput}
+\begin{Sinput}
 library(tidyverse)
 result <- hotspot_cluster(hotspots_fin,
                           lon = "lon",
@@ -378,6 +389,87 @@ result <- hotspot_cluster(hotspots_fin,
                           timeUnit = "h",
                           timeStep = 1)
 \end{Sinput}
+\begin{Soutput}
+#> 
+\end{Soutput}
+\begin{Soutput}
+#> ------------------------------ SPOTOROO 0.0.0.9000 -----------------------------
+\end{Soutput}
+\begin{Soutput}
+#> 
+\end{Soutput}
+\begin{Soutput}
+#> -- Calling Core Function : `hotspot_cluster()` --
+\end{Soutput}
+\begin{Soutput}
+#> 
+\end{Soutput}
+\begin{Soutput}
+#> -- 1 time index = 1 hours
+\end{Soutput}
+\begin{Soutput}
+#> v Transform observed time > time indexes
+\end{Soutput}
+\begin{Soutput}
+#> i 970 time indexes found
+\end{Soutput}
+\begin{Soutput}
+#> 
+\end{Soutput}
+\begin{Soutput}
+#> -- activeTime = 24 time indexes | adjDist = 3000 meters
+\end{Soutput}
+\begin{Soutput}
+#> v Cluster
+\end{Soutput}
+\begin{Soutput}
+#> i 16 clusters found (including noise)
+\end{Soutput}
+\begin{Soutput}
+#> 
+\end{Soutput}
+\begin{Soutput}
+#> -- minPts = 4 | minTime = 3
+\end{Soutput}
+\begin{Soutput}
+#> v Handle noise
+\end{Soutput}
+\begin{Soutput}
+#> i 6 clusters left
+\end{Soutput}
+\begin{Soutput}
+#> i noise proportion : 0.934579439252336 %
+\end{Soutput}
+\begin{Soutput}
+#> 
+\end{Soutput}
+\begin{Soutput}
+#> -- ignitionCenter = 'mean'
+\end{Soutput}
+\begin{Soutput}
+#> v Compute ignition points for clusters
+\end{Soutput}
+\begin{Soutput}
+#> i average hotspots : 176.7
+\end{Soutput}
+\begin{Soutput}
+#> i average duration : 131.9 hours
+\end{Soutput}
+\begin{Soutput}
+#> 
+\end{Soutput}
+\begin{Soutput}
+#> -- Time taken = 0 mins 3 secs for 1070 hotspots
+\end{Soutput}
+\begin{Soutput}
+#> i 0.003 secs per hotspot
+\end{Soutput}
+\begin{Soutput}
+#> 
+\end{Soutput}
+\begin{Soutput}
+#> --------------------------------------------------------------------------------
+\end{Soutput}
 \end{Schunk}
 
 For this sample of data, the result contains `r length(unique(result\$))
@@ -396,14 +488,14 @@ For this sample of data, the result contains `r length(unique(result\$))
 \begin{Schunk}
 
 
-\begin{center}\includegraphics[width=0.7\linewidth,height=0.7\textheight]{clustering_paper_files/figure-latex/unnamed-chunk-9-1} \end{center}
+\begin{center}\includegraphics[width=1\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-9-1} \end{center}
 
 \end{Schunk}
 
 \begin{Schunk}
 
 
-\begin{center}\includegraphics[width=0.7\linewidth,height=0.7\textheight]{clustering_paper_files/figure-latex/unnamed-chunk-10-1} \end{center}
+\begin{center}\includegraphics[width=1\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-10-1} \end{center}
 
 \end{Schunk}
 
