@@ -1,6 +1,6 @@
 % !TeX root = RJwrapper.tex
-\title{A clustering algorithm to organize satellite hotspots data for the
-purpose of tracking bushfires remotely}
+\title{A clustering algorithm to organize satellite hotspots data for
+the purpose of tracking bushfires remotely}
 \author{by Weihao Li, Emily Dodwell, and Dianne Cook}
 
 \maketitle
@@ -109,9 +109,9 @@ but undetectable by satellite before flaring up again.
 Given a certain value of \(ActiveTime\) and an integer length of the
 time frame \(T\), the algorithm will define several intervals,
 
-\[\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T\]
+\[\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T\],
 
-,where both \(T\) and \(t\) have the same unit as \(ActiveTime\).
+where both \(T\) and \(t\) have the same unit as \(ActiveTime\).
 
 For example, if the dataset contains 48 hours of hotspot data and the
 \(ACtiveTime = 24~hours\), there will be 48 intervals defined by the
@@ -318,13 +318,6 @@ months are given in Figure \ref{fig:clusteringfinalresults} and Figure
 
 Display showing how a fire moves over time, maybe two or more fires
 
-\begin{Schunk}
-
-
-\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-6-1} \end{center}
-
-\end{Schunk}
-
 \hypertarget{allocating-resources-for-future-fire-prevention}{%
 \subsubsection{Allocating resources for future fire
 prevention}\label{allocating-resources-for-future-fire-prevention}}
@@ -365,19 +358,8 @@ completes.
 \begin{Schunk}
 \begin{Sinput}
 library(spotoroo)
-\end{Sinput}
-\begin{Soutput}
-#> 
-#> Attaching package: 'spotoroo'
-\end{Soutput}
-\begin{Soutput}
-#> The following objects are masked _by_ '.GlobalEnv':
-#> 
-#>     hotspots, vic_map
-\end{Soutput}
-\begin{Sinput}
 library(tidyverse)
-result <- hotspot_cluster(hotspots_fin,
+result <- hotspot_cluster(hotspots,
                           lon = "lon",
                           lat = "lat",
                           obsTime = "obsTime",
@@ -393,7 +375,7 @@ result <- hotspot_cluster(hotspots_fin,
 #> 
 \end{Soutput}
 \begin{Soutput}
-#> ------------------------------ SPOTOROO 0.0.0.9000 -----------------------------
+#> -------------------------------- SPOTOROO 0.1.0 --------------------------------
 \end{Soutput}
 \begin{Soutput}
 #> 
@@ -429,7 +411,7 @@ result <- hotspot_cluster(hotspots_fin,
 #> 
 \end{Soutput}
 \begin{Soutput}
-#> -- minPts = 4 | minTime = 3
+#> -- minPts = 4 hot spots | minTime = 3 time indexes
 \end{Soutput}
 \begin{Soutput}
 #> v Handle noise
@@ -438,7 +420,7 @@ result <- hotspot_cluster(hotspots_fin,
 #> i 6 clusters left
 \end{Soutput}
 \begin{Soutput}
-#> i noise proportion : 0.934579439252336 %
+#> i noise proportion : 0.935 %
 \end{Soutput}
 \begin{Soutput}
 #> 
@@ -450,7 +432,7 @@ result <- hotspot_cluster(hotspots_fin,
 #> v Compute ignition points for clusters
 \end{Soutput}
 \begin{Soutput}
-#> i average hotspots : 176.7
+#> i average hot spots : 176.7
 \end{Soutput}
 \begin{Soutput}
 #> i average duration : 131.9 hours
@@ -459,10 +441,10 @@ result <- hotspot_cluster(hotspots_fin,
 #> 
 \end{Soutput}
 \begin{Soutput}
-#> -- Time taken = 0 mins 3 secs for 1070 hotspots
+#> -- Time taken = 0 mins 2 secs for 1070 hot spots
 \end{Soutput}
 \begin{Soutput}
-#> i 0.003 secs per hotspot
+#> i 0.002 secs per hot spot
 \end{Soutput}
 \begin{Soutput}
 #> 
@@ -548,4 +530,3 @@ Econometrics and Business Statistics\\
 %
 \\\href{mailto:dicook@monash.edu}{\nolinkurl{dicook@monash.edu}}
 }
-

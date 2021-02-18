@@ -41,6 +41,9 @@ library(ggthemes)
 library(sf)
 library(ggpubr)
 library(rnaturalearth)
+library(rnaturalearthhires) # do we need, compile complains without
+library(sp) # do we need, compile complains without
+library(spotoroo)
 library(lubridate)
 library(gridExtra)
 library(kableExtra)
@@ -107,12 +110,13 @@ The final hotspot dataset contains 75936 observations with ID, longitude, latitu
  
 
 ```{r}
-au_map <- ne_states(country = 'Australia', returnclass = 'sf')
-vic_map <- au_map[7,]
-hotspots <- read_csv("data/VIC_hotspots_raw.csv")
-memberships <- read_csv("data/VIC_hotspots_after_clustering.csv")
-hotspots$fire_id <- memberships$fire_id
-rm(memberships)
+#au_map <- ne_states(country = 'Australia', returnclass = 'sf')
+#vic_map <- au_map[7,]
+data("vic_map")
+hotspots_all <- read_csv("data/VIC_hotspots_raw.csv")
+#memberships <- read_csv("data/VIC_hotspots_after_clustering.csv")
+hotspots_all$fire_id <- read_csv("data/VIC_hotspots_after_clustering.csv") %>% select(fire_id)
+#rm(memberships)
 ```
 
 
@@ -120,7 +124,7 @@ rm(memberships)
 if (!file.exists("figures/before_clustering.png")){
   ggplot() +
   geom_sf(data = vic_map, col = NA) +
-  geom_point(data = hotspots, aes(lon, lat), alpha = 0.3) +
+  geom_point(data = hotspots_all, aes(lon, lat), alpha = 0.3) +
   theme_map() -> p
 
   ggsave(filename = "figures/before_clustering.png", dpi = 300, plot = p)
@@ -141,9 +145,9 @@ Despite hotspot data can be clustered using ordinary algorithms, like K-means, i
 
 Given a certain value of $ActiveTime$ and an integer length of the time frame $T$, the algorithm will define several intervals,
 
-$$\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T$$
+$$\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T$$,
 
-,where both $T$ and $t$ have the same unit as $ActiveTime$. 
+where both $T$ and $t$ have the same unit as $ActiveTime$. 
 
 For example, if the dataset contains 48 hours of hotspot data and the $ACtiveTime = 24~hours$, there will be 48 intervals defined by the algorithm, $\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}$, where
 
@@ -479,12 +483,12 @@ Based on the clustering result, ignition location for each cluster can be comput
 
 
 ```{r clusteringfinalresults, fig.cap=" The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season."}
-hotspots %>%
+hotspots_all %>%
   group_by(fire_id) %>%
   summarise(hour_id = min(hour_id)) %>%
   ungroup() -> temp
 
-ignition <- left_join(temp, hotspots) %>%
+ignition <- left_join(temp, hotspots_all) %>%
   group_by(fire_id) %>%
   summarise(time = mean(`#obstime`), lon = mean(lon), lat = mean(lat))
 
@@ -545,7 +549,7 @@ p3 / (p1 + p2)
 
 
 
-```{r fig.height=8}
+```{r fig.height=8, eval=FALSE}
 tarid <- c(300)
 
 add_lag_cen <- function(x, times = 10) {
@@ -558,7 +562,7 @@ add_lag_cen <- function(x, times = 10) {
   
 }
 
-hotspots %>%
+hotspots_all %>%
   select(fire_id, dettime, lon, lat) %>%
   filter(fire_id %in% c(tarid)) %>%
   mutate(new_date = as.character(floor_date(dettime, unit = "12 hours"))) %>%
@@ -568,7 +572,7 @@ hotspots %>%
   mutate(cen_lon_1 = lag(cen_lon), cen_lat_1 = lag(cen_lat)) %>%
   add_lag_cen(30) -> cen
 
-hotspots %>%
+hotspots_all %>%
   select(fire_id, dettime, lon, lat) %>%
   filter(fire_id %in% c(tarid)) %>%
   mutate(new_date = as.character(floor_date(dettime, unit = "12 hours"))) %>%
@@ -667,7 +671,7 @@ A sample data set is provided with the package, to illustrate its use.  The func
 ```{r eval=TRUE, echo=TRUE, message=TRUE}
 library(spotoroo)
 library(tidyverse)
-result <- hotspot_cluster(hotspots_fin,
+result <- hotspot_cluster(hotspots,
                           lon = "lon",
                           lat = "lat",
                           obsTime = "obsTime",
