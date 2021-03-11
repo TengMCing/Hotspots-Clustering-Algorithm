@@ -12,109 +12,246 @@ An abstract of less than 150 words.
 \hypertarget{introduction}{%
 \subsection{Introduction}\label{introduction}}
 
-Bushfires are a major problem for Australia, and many other parts of the
-globe. There is concern that as the climate becomes hotter, and drier,
-that the impact of fires becomes much more severe and extensive. In
-Australia, the 2019-2020 fires were the worst on record causing
-extensive ecological damage, as well as damage to agricultural
-resources, properties and infrastructure. The Wollemi pine, rare
-prehistoric trees, required special forces intervention to prevent the
-last stands in the world, in remote wilderness areas, from being turned
-into ash.
+The 2019-2020 Australia bushfire season was catastrophic in the scale of
+damage caused to agricultural resources, property, infrastructure, and
+ecological systems. By the end of 2020, the devastation attributable to
+these Black Summer fires included 33 lives lost, almost 19 million
+hectares of land burned, over 3,000 homes destroyed and AUD \$1.7
+billion in insurance losses, as well as an estimated 1 billion animals
+killed, including half of Kangaroo Island's population of koalas
+\citep{Filkov2020}. According to \citet{climate2020}, 2019 was the
+warmest year on record in Australia and capped off a period from
+2013-2019 that represents seven of the nine warmest years. There is
+concern and expectation that impacts of climate change -- including more
+extreme temperatures, persistent drought, and changes in plant growth
+and landscape drying -- will worsen conditions for extreme bushfires
+\citep[\citet{Deb2020}]{climate2020}. Contributing to the problem is
+that dry lightning represents the main source of natural ignition, and
+fires that start in remote areas deep in the temperate forests are
+difficult to access and monitor \citep{Abram2021}. Therefore,
+opportunities to detect fire ignitions, monitor bushfire spread, and
+understand movement patterns in remote areas are important for
+developing effective strategies to mitigate bushfire impact.
 
-Contributing to the problem is that many fires started in very remote
-areas, locations deep into the temperate forests ignited by lightning,
-that are virtually impossible to access or to monitor. Satellite data
-provides a possible solution to this, particularly remotely sensed
-hotspot data, which may be useful in detecting new ignitions and
-movements of fires. Understanding fires in remote areas using satellite
-data may provide some help in developing effective strategies for
-mitigating bushfire impact.
+Remote satellite data provides a potential solution to the challenge of
+active fire detection and monitoring, and the Himawari-8 satellite
+represents a significant improvement in the technology by which this can
+be done. Launched in 2015 by the Japan Meteorological Agency, its
+10-minute temporal resolution enables almost real-time monitoring of
+fires across East Asia and Australia. For this reason, development of
+algorithms to process pixels of its satellite imagery into hotspots --
+i.e.~pixels that represent likely fires -- is an active area of research
+(see for example \citet{Xu2017}, \citet{Wickramasinghe2016},
+\citet{Jang2019}). We make use of the Japan Aerospace Exploration Agency
+(JAXA) wildfire product \citep{jaxa} that identifies the location and
+fire radiative power (FRP) of hotspots according to an algorithm
+developed by \citet{Kurihara2020}.
 
-This work addresses this topic. Using hotspot data, can we cluster in
-space and time, in order to determine (1) points of ignition and (2)
-track the movement of bushfires. The algorithm is implemented in the R
-package \CRANpkg{spotoroo}.
+Detection of bushfire ignition and movement requires the clustering of
+satellite hotspots into meaningful clusters, which may then be
+considered in their entirety or summarized by a trajectory. In this
+paper, we propose a spatiotemporal clustering algorithm to represent
+bushfires as clusters of hotspot pixels in order to (1) determine points
+of bushfire ignition and (2) track their movement over space and time.
+Inspired by two existing clustering algorithms, namely Density Based
+Spatial Clustering of Applications with Noise (DBSCAN)
+\citep{ester1996density} and Fire Spread Reconstruction (FSR)
+\citep{Loboda2007}, our algorithm extends the functionality of DBSCAN's
+spatial clustering parameters to the additional temporal dimension,
+while drawing upon the fire movement dynamics presented in FSR and
+generalizing its specification of spatiotemporal parameters, thereby
+providing an intuitive, straightforward, and extendable approach to the
+complex problem of bushfire identification and monitoring. In clustering
+hotspots into bushfires of arbitrary shape and size, we capture key
+bushfire behavior: fire evolution occurs only forwards in time; fires
+can smolder undetectably for awhile, burn out, and merge with other
+bushfires; and solitary pixels that may not represent true fires should
+not be represented as a bushfire cluster.
+
+The core functionality of this spatiotemporal clustering algorithm
+determines whether a hotspot represents a new ignition point or a
+continuation of an existing bushfire by comparing and combining cluster
+membership information via incremental updates from one time frame to
+the next. Our algorithm first slices the hotspot data by its temporal
+dimension according to a user-defined time step. This thereby divides
+the overall spatiotemporal clustering task into many smaller spatial
+clustering tasks that may be completed in parallel, where each frame can
+be considered a static snapshot in time. Within each time frame,
+hotspots that fall within the threshold of a user-defined spatial metric
+of each other are joined in a cluster. Then, proceeding sequentially, we
+identify whether or not a hotspot was observed in the previous time
+frame. If so, it retains its cluster membership from the previous time
+frame; if not, the hotspot adopts the membership of the nearest hotspot
+with which it has been clustered. If no such neighbor exists, a hotspot
+represents the start of a new fire. It is important to note that each
+hotspot does not necessarily represent an individual, so similar to
+DBSCAN's identification of noise, those clusters that does not pass the
+threshold of a minimum number of hotspots or exist for a minimum amount
+of time are labeled noise.
+
+As emphasized by \citet{kisilevich2009spatio}, the selection of spatial
+resolution and time granularity -- and relevance of domain knowledge in
+their choice -- are imperative to the understanding and interpretation
+of resulting clusters. The incorrect choice for either can be highly
+influential to the shape and number of clusters discovered, and in the
+case of satellite hotspot data, will depend on the spatial resolution
+and temporal frequency at which images are captured. Therefore, we
+present a visualization heuristic for parameter tuning that enables
+selection of near-optimal values of the parameters, irrespective of the
+exact data source.
+
+Finally, we implement this algorithm in R package \texttt{spotoroo}:
+Spatiotemporal Clustering of Satellite Hot Spot Data, available on CRAN.
+By enabling the user to cluster satellite hotspot data across space and
+time, this software provides the ability to relate findings to key
+factors in bushfire ignition and patterns in their spread (e.g.~weather
+and fuel sources).
 
 This paper is organised as follows. The next section provides an
 introduction to the literature on spatiotemporal clustering and bushfire
 modeling and dynamics. Section \protect\hyperlink{algorithm}{Algorithm}
-describes the clustering algorithm, and section
+describes the clustering algorithm, and {[}Package{]} discussed its
+implementation in \texttt{spotoroo} on CRAN.
 \protect\hyperlink{application}{Application} illustrates how the
 resulting data can be used to study bushfire ignition.
 
 \hypertarget{background}{%
 \subsection{Background}\label{background}}
 
-literature review
+\hypertarget{spatiotemporal-clustering}{%
+\subsubsection{Spatiotemporal
+clustering}\label{spatiotemporal-clustering}}
+
+\citet{datamining2012} identify five categories of clustering
+algorithms: partitioning methods, hierarchical methods, density-based
+methods, grid-based methods, and model-based methods. Clustering of
+hotspot data lends itself nicely to density-based methods, which allow
+for the identification of clusters of various shapes and sizes, without
+requiring that the user pre-specify number of clusters -- these are two
+limitations of partitioning and hierarchical methods. We therefore focus
+on a review of density-based methods and refer the reader to
+\citet{datamining2012} for algorithms in other categories and
+\citet{kisilevich2009spatio} for appropriate extensions to
+spatiotemporal data. \emph{(Note here why grid-based methods would not
+be good for resolution of hotspot data.)}
+
+Density-based methods separate regions constituting a high density of
+points separated by low-density regions by identifying pairwise
+distances between points, and then requiring that a threshold for
+\citep{datamining2012}. Density Based Spatial Clustering of Applications
+with Noise (DBSCAN) \citep{ester1996density} is an influential
+implementation of this methodology developed in 1996 designed to address
+three challenges of clustering algorithms: (1) requirements of domain
+knowledge to determine the hyperparameters, (2) arbitrary shape of
+clusters and (3) computational efficiency. DBSCAN defines a maximum
+radius \(\epsilon\) to construct a neighborhood around each point. It
+distinguishes between a core point, for which the number of points that
+fall in its neighborhood meets a minimum threshold, and a boundary
+point, whose neighborhood does not meet this threshold, but can be
+reached via overlapping neighborhoods from that of a core point.
+Intersecting neighborhoods are defined to be a cluster, while points
+that cannot be assigned to a cluster are identified as noise. DBSCAN
+also provides a heuristic to inform selection of \emph{(Note: Only
+mention DBSCAN's computational complexity for comparison if we have way
+to measure ours.)}
+
+What is often identified as a limitation of DBSCAN -- its inability to
+differentiate between clusters of different densities and those adjacent
+to each other \citep{stdbscan} -- is of less concern for the application
+to satellite data, which by nature is a set of points corresponding to
+the equidistant center of pixels on grid of latitudes and longtitudes.
+However, its application to spatiotemporal clustering problems, which
+contain at least three dimensions -- spatial location (e.g.~latitude and
+longitude) and time -- require specification of temporal granularity and
+treatment of temporal similarity \citep{kisilevich2009spatio}. As such,
+several extensions to DBSCAN's spatial clustering functionality have
+been proposed for spatiotemporal clustering solutions.
+
+ST-DBSCAN \citep{stdbscan} was developed as an extension of DBSCAN's
+functionality to cluster points according to their non-spatial, spatial,
+and temporal attributes, and simultaneously address two of DBSCAN's
+limitations regarding identification of clusters of varying densities
+and differentiation of adjacent clusters. Therefore, in addition to
+DBSCAN's original metric to capture the spatial distance between two
+objects, ST-DBSCAN introduces a second metric that considers similarity
+of variables associated with temporal neighbors; that is, points
+observed in consecutive time steps.
+
+More similar in their goals are (still to write up): Incremental DBSCAN
+\citep{ester1998incremental}, Discovering Moving Clusters in
+Spatiotemporal Data \citep{Kalnis2005}
+
+\hypertarget{bushfire-dynamics-clustering-in-literature}{%
+\subsubsection{Bushfire dynamics (clustering in
+literature)}\label{bushfire-dynamics-clustering-in-literature}}
+
+\citet{kisilevich2009spatio} notes the importance of domain expertise in
+selection of parameters; for this reason, we also consider literature on
+bushfire dynamics \emph{(TBD)} and satellite hotspot clustering for
+wildfire monitoring.
+
+Fire Spread Reconstruction (FSR) \citep{Loboda2007} was developed to
+identify fire spread in the Russian boreal forest based on active fire
+detections from MODIS (Moderate Resolution Imaging Spectroradiometer),
+which has a temporal frequency of six hours. The algorithm proposed by
+the authors constructs a tree based on three rules: (1) the earliest
+observed hotspot is the root of the tree, (2) any node is within a 2.5km
+radius from its parent and (3) any node is observed no later than four
+days from its parent. When the tree is closed and there are still
+unassigned hotspots, the algorithm continues at the earliest unassigned
+hotspot to construct a new tree. Finally, each tree is a cluster, and
+the earliest hotspot is defined as the ignition point.
+
+FSR's selection of parameters is specific to the region and data product
+used, and is therefore not immediately generalizable to other sources of
+satellite hotspot data. By implementation, each fire has a maximum
+length of four days \emph{(is this true? implementation of sliding
+temporal window, if any, was not clear to me)}, which does not
+accurately represent what has been known to occur in Australia, where
+the (OCTOBER FIRE NAME) burned for months (citation). Additionally, due
+to its sequential construction of fires, two that may start in different
+locations but result in overlapping coverage are considered to be a
+single fire by the time they intersect. As a result, coverage of each
+fire may increase dramatically in a short time period, which does not
+accurately reflect the natural speed of a bushfire. \emph{(let's discuss
+this)}
+
+(Also \citep{hermawati2016} to show that DBSCAN has been used for fire
+clustering?)
 
 \hypertarget{algorithm}{%
 \subsection{Algorithm}\label{algorithm}}
 
-\hypertarget{data-source}{%
-\subsubsection{Data source}\label{data-source}}
-
-The illustration of this algorithm will use the wild fire product
-(produced from Himawari-8) supplied by the P-Tree System, Japan
-Aerospace Exploration Agency (JAXA) \citeyearpar{jaxa} as the data
-source. This wild fire product will be referred as the hotspot data in
-this paper. It contains records of 1989572 hotspots from October 2019 to
-March 2020 in the full disk of 140 \textdegree east longitude with 0.02
-\textdegree spatial resolution and 10 minutes temporal resolution.
-
-The data pre-processing procedure includes selecting hotspots within the
-boundary of Victoria and filtering hotspots with a threshold (irradiance
-over 100 watts per square metre) suggested by landscape ecologist and
-spatial scientist Dr.~Grant Williamson \citeyearpar{hotspots} to reduce
-noise from the background.
-
-The final hotspot dataset contains 75936 observations with ID,
-longitude, latitude and observed date as fields. The overall
-distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
-
-\begin{Schunk}
-\begin{figure}
-
-{\centering \includegraphics[width=0.8\linewidth]{figures/before_clustering} 
-
-}
-
-\caption[The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season]{The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season.}\label{fig:hotspots}
-\end{figure}
-\end{Schunk}
-
-\hypertarget{steps}{%
-\subsubsection{Steps}\label{steps}}
-
-The spatiotemporal clustering algorithm is consist of 3 steps, (1)
-divide hotspots into intervals, (2) cluster hotspots spatially, and (3)
-update the memberships. These three steps will be described in details
-in the rest of the section.
+The spatiotemporal clustering algorithm is consist of 4 steps, (1)
+divide hotspots into intervals, (2) cluster hotspots spatially, (3)
+update the memberships and (4) handle noise. These four steps will be
+described in details in the rest of the section.
 
 \textbf{1. Divide hotspots into intervals}
 
-Despite hotspot data can be clustered using ordinary algorithms, like
-K-means, in the three-dimensional Euclidean space, the clustering
-results could be highly sensitive to the scaling of the temporal
-dimension \citep{kisilevich2009spatio}. Besides, one of the
-characteristics of the hotspot data is cloud cover could lead to missing
-observations of a bushfire in several hours. This suggests that hotspots
-with long intervals may present connections. One possible solution to
-these two issues is to divide hotspot data into intervals then perform
-clustering spatially only, such that the temporal dependence between
-hotspots could be predetermined by a parameter \(ActiveTime\). The
-interpretation of \(ActiveTime\) is the time a fire can stay smouldering
-but undetectable by satellite before flaring up again.
+One of the characteristics of the hotspot data is earlier hotspots are
+most likely to be the source of the later hotspots nearby. For this
+reason, we need to treat the temporal dimension specially. Our method is
+to define a sequence of intervals in which only spatially relationship
+between hotspots will be considered. The final clustering result is
+produced by letting later intervals to adopt information from the
+earlier intervals.
 
-Given a certain value of \(ActiveTime\) and an integer length of the
-time frame \(T\), the algorithm will define several intervals,
+Another characteristic of the hotspot data is cloud cover could lead to
+missing observations of a bushfire in several hours. As a result,
+hotspots with a long interval may preserve direct association. To
+overcome this problem, we define a integer parameter \(activeTime\) to
+predetermine the maximum time a fire can stay smouldering but
+undetectable by satellite before flaring up again.
 
-\[\boldsymbol{S}_t = [max(1,t-ActiveTime),t],~~t = 1,2,...,T\],
+Thus, the interval \(s_t\) is defined by the following formula:
 
-where both \(T\) and \(t\) have the same unit as \(ActiveTime\).
+\[\boldsymbol{S}_t = [max(1,t-activeTime),t],~~t = 1,2,...,T\] where
+\(max(.)\) is the maximum function, \(t\) is the time index and \(T\) is
+the integer length of the time frame.
 
 For example, if the dataset contains 48 hours of hotspot data and the
-\(ACtiveTime = 24~hours\), there will be 48 intervals defined by the
+\(activeTime = 24~hours\), there will be 48 intervals defined by the
 algorithm, \(\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}\),
 where
 
@@ -131,16 +268,16 @@ where
 
 \textbf{2. Cluster hotspots spatially}
 
-The previous step breaks the temporal dimension. Hence, the following
+The previous step drops the temporal dimension. Hence, the following
 step only needs to address the hotspots spatially by introducing another
-parameter \(AdjDist\). \(AdjDist\) represents the potential distance a
+parameter \(adjDist\). \(adjDist\) represents the potential distance a
 fire can spread with respect to the temporal resolution of the data. For
 example, let \(AdjDist = 3000 m\) and the temporal resolution of the
 data is 10-minute, then the potential speed of the bushfire is
 \(3000m/10~min = 18km/h\).
 
 Given a fixed value of \(AdjDist\) and the interval
-\(\boldsymbol{S}_t\), the algorithm will:
+\(\boldsymbol{S}_t\), the algorithm will,
 
 \begin{enumerate}
 \def\labelenumi{(\alph{enumi})}
@@ -191,18 +328,19 @@ This step starts from \(t=2\) till \(t=T\). Given the interval
 \begin{enumerate}
 \def\labelenumi{(\alph{enumi})}
 \item
-  Let \(h_i\) succeeds its membership from \(\boldsymbol{S}_{t-1}\), if
-  \(h_i\) belongs to \(\boldsymbol{S}_{t-1}\), where \(h_i\) is the
-  \(i\)th hotspot in the interval \(\boldsymbol{S}_t\). These hotspots
-  are collected by a set \(\boldsymbol{H}_s = \{h_s^1,h_s^2,...\}\).
+  Let \(h_i\) carries over from its membership in
+  \(\boldsymbol{S}_{t-1}\), if \(h_i\) belongs to
+  \(\boldsymbol{S}_{t-1}\), where \(h_i\) is the \(i\)th hotspot in the
+  interval \(\boldsymbol{S}_t\). These hotspots are collected by a set
+  \(\boldsymbol{H}_s = \{h_s^1,h_s^2,...\}\).
 \item
-  Set \(\boldsymbol{H}_c = \{h_c^1,h_c^2,...\}\), where \(h_c^i\) is the
-  \(i\)th hotspot in set \(\boldsymbol{H}_c\). \(h_c^i\) belongs to
+  Let \(\boldsymbol{H}_c = \{h_c^1,h_c^2,...\}\), where \(h_c^i\) is the
+  \(i\)th hotspot in set \(\boldsymbol{H}_c\) and \(h_c^i\) belongs to
   \(\boldsymbol{S}_t\) but does not belong to \(\boldsymbol{S}_{t-1}\).
   If \(h_c^i\) being clustered into the same component with \(h_s^j\) in
-  interval \(\boldsymbol{S}_t\), \(h_c^i\) succeeds the membership from
-  the nearest \(h_s^j\), where \(h_s^j\) is the \(j\)th hotspot in set
-  \(\boldsymbol{H}_s\).
+  interval \(\boldsymbol{S}_t\), let \(h_c^i\) carries over from the
+  membership of the nearest \(h_s^j\), where \(h_s^j\) is the \(j\)th
+  hotspot in set \(\boldsymbol{H}_s\).
 \end{enumerate}
 
 Figure \ref{fig:step3figs} gives an example of this step.
@@ -214,15 +352,124 @@ Figure \ref{fig:step3figs} gives an example of this step.
 
 }
 
-\caption{An example of step 3. In this example, there are 30 hotspots belong to interval $\boldsymbol{S}_t$. (a) 20 out of 30 hotspots belong to both interval $\boldsymbol{S}_t$ and interval $\boldsymbol{S}_{t-1}$. These hotspots succeed their memberships from $\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\boldsymbol{S}_t$. (b) For each red point, succeeds the nearest blue label that shares the same component (according to the left plot) with that red point in interval $\boldsymbol{S}_t$. }\label{fig:step3figs}
+\caption{An example of step 3. In this example, there are 30 hotspots belong to interval $\boldsymbol{S}_t$. (a) 20 out of 30 hotspots belong to both interval $\boldsymbol{S}_t$ and interval $\boldsymbol{S}_{t-1}$. Let these hotspots carry over from their memberships in $\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\boldsymbol{S}_t$. (b) For each red point, let it carry over from the membership of the nearest blue label which shares the same component (according to the spatial clustering result of this interval) in interval $\boldsymbol{S}_t$. }\label{fig:step3figs}
 \end{figure}
 \end{Schunk}
 
-\hypertarget{results}{%
-\subsubsection{Results}\label{results}}
+\textbf{4. Handle noise}
+
+After performing step 3, all membership labels will be produced.
+However, a noticeable amount of small clusters could exist. We provide a
+noise filter in the last step to address this issue.
+
+Parameter \(minPts\) is the minimum number of hotspots a cluster
+contains and parameter \(minTime\) is the minimum time a cluster lasts.
+Any cluster that doesn't satisfy this two conditions will be assigned
+with membership \(-1\) to indicate noise.
+
+\hypertarget{result}{%
+\subsubsection{Result}\label{result}}
 
 The result of this spatiotemporal clustering algorithm applied on the
-hotspot data is a vector of memberships with length equals to 75936.
+hotspot data is a vector of memberships with length equals to the number
+of observations in the data.
+
+\hypertarget{application}{%
+\subsection{Application}\label{application}}
+
+In this part, we will demonstrate the implementation of this algorithm
+using the R package \CRANpkg{spotoroo} and its potential use in studying
+bushfire ignition.
+
+\hypertarget{data-source}{%
+\subsubsection{Data source}\label{data-source}}
+
+The illustration will use the wild fire product (produced from
+Himawari-8) supplied by the P-Tree System, Japan Aerospace Exploration
+Agency (JAXA) \citeyearpar{jaxa} as the data source. This wild fire
+product will be referred as the hotspot data in this paper. It contains
+records of 1989572 hotspots from October 2019 to March 2020 in the full
+disk of 140 \textdegree east longitude with 0.02 \textdegree spatial
+resolution and 10 minutes temporal resolution.
+
+The data pre-processing procedure includes selecting hotspots within the
+boundary of Victoria and filtering hotspots with a threshold (irradiance
+over 100 watts per square metre) suggested by landscape ecologist and
+spatial scientist Dr.~Grant Williamson \citeyearpar{hotspots} to reduce
+noise from the background.
+
+The final hotspot dataset contains 75936 observations with ID,
+longitude, latitude and observed date as fields. The overall
+distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{figures/before_clustering} 
+
+}
+
+\caption[The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season]{The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season.}\label{fig:hotspots}
+\end{figure}
+\end{Schunk}
+
+\hypertarget{clustering-the-himawari-8-hotspots}{%
+\subsubsection{Clustering the Himawari-8
+hotspots}\label{clustering-the-himawari-8-hotspots}}
+
+The package can be installed from CRAN using
+
+\begin{verbatim}
+install.packages("spotoroo")
+\end{verbatim}
+
+To perform the clustering algorithm on the Himawari-8 hotspot data,
+using
+
+\hypertarget{determining-the-ignition-point-and-time-for-individual-fires}{%
+\subsubsection{Determining the ignition point and time for individual
+fires}\label{determining-the-ignition-point-and-time-for-individual-fires}}
+
+Based on the clustering result, ignition location for each cluster can
+be computed. The strategy is to select the earliest hotspot of a cluster
+as its ignition point. Besides, if there are multiple earliest hotspots
+belong to the same cluster, the centroid of these hotspots is used as
+the ignition location. According to this method, ignition points over 6
+months are given in Figure \ref{fig:clusteringfinalresults} and Figure
+\ref{fig:app3}.
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/clusteringfinalresults-1} 
+
+}
+
+\caption[ The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season]{ The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season.}\label{fig:clusteringfinalresults}
+\end{figure}
+\end{Schunk}
+
+\begin{Schunk}
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/app3-1} 
+
+}
+
+\caption[(a) Number of bushfires ignited from October 2019 to March 2020]{(a) Number of bushfires ignited from October 2019 to March 2020. (b) The distribution of the bushfire ignitions on a light day (c) and a heavy day. There are 3 ignitions on January 24, 2020 and 106 ignitions on December 18, 2019.}\label{fig:app3}
+\end{figure}
+\end{Schunk}
+
+\hypertarget{tracking-fire-movement}{%
+\subsubsection{Tracking fire movement}\label{tracking-fire-movement}}
+
+Display showing how a fire moves over time, maybe two or more fires
+
+\hypertarget{allocating-resources-for-future-fire-prevention}{%
+\subsubsection{Allocating resources for future fire
+prevention}\label{allocating-resources-for-future-fire-prevention}}
+
+Merging data with camp sites, CFA, roads, \ldots{}
 
 \hypertarget{effects-of-parameter-choices}{%
 \subsubsection{Effects of parameter
@@ -275,54 +522,6 @@ tuning process by using this visualization tool. The final choice of
 \caption[Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours]{Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours.}\label{fig:vis2}
 \end{figure}
 \end{Schunk}
-
-\hypertarget{application}{%
-\subsection{Application}\label{application}}
-
-\hypertarget{determining-the-ignition-point-and-time-for-individual-fires}{%
-\subsubsection{Determining the ignition point and time for individual
-fires}\label{determining-the-ignition-point-and-time-for-individual-fires}}
-
-Based on the clustering result, ignition location for each cluster can
-be computed. The strategy is to select the earliest hotspot of a cluster
-as its ignition point. Besides, if there are multiple earliest hotspots
-belong to the same cluster, the centroid of these hotspots is used as
-the ignition location. According to this method, ignition points over 6
-months are given in Figure \ref{fig:clusteringfinalresults} and Figure
-\ref{fig:app3}.
-
-\begin{Schunk}
-\begin{figure}
-
-{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/clusteringfinalresults-1} 
-
-}
-
-\caption[ The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season]{ The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season.}\label{fig:clusteringfinalresults}
-\end{figure}
-\end{Schunk}
-
-\begin{Schunk}
-\begin{figure}
-
-{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/app3-1} 
-
-}
-
-\caption[(a) Number of bushfires ignited from October 2019 to March 2020]{(a) Number of bushfires ignited from October 2019 to March 2020. (b) The distribution of the bushfire ignitions on a light day (c) and a heavy day. There are 3 ignitions on January 24, 2020 and 106 ignitions on December 18, 2019.}\label{fig:app3}
-\end{figure}
-\end{Schunk}
-
-\hypertarget{tracking-fire-movement}{%
-\subsubsection{Tracking fire movement}\label{tracking-fire-movement}}
-
-Display showing how a fire moves over time, maybe two or more fires
-
-\hypertarget{allocating-resources-for-future-fire-prevention}{%
-\subsubsection{Allocating resources for future fire
-prevention}\label{allocating-resources-for-future-fire-prevention}}
-
-Merging data with camp sites, CFA, roads, \ldots{}
 
 \hypertarget{implementation}{%
 \subsection{Implementation}\label{implementation}}
@@ -441,10 +640,10 @@ result <- hotspot_cluster(hotspots,
 #> 
 \end{Soutput}
 \begin{Soutput}
-#> -- Time taken = 0 mins 2 secs for 1070 hot spots
+#> -- Time taken = 0 mins 3 secs for 1070 hot spots
 \end{Soutput}
 \begin{Soutput}
-#> i 0.002 secs per hot spot
+#> i 0.003 secs per hot spot
 \end{Soutput}
 \begin{Soutput}
 #> 
@@ -459,25 +658,25 @@ For this sample of data, the result contains `r length(unique(result\$))
 \begin{Schunk}
 \begin{figure}
 
-{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-8-1} 
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-9-1} 
 
 }
 
-\caption[Automatic plot of results]{Automatic plot of results}\label{fig:unnamed-chunk-8}
+\caption[Automatic plot of results]{Automatic plot of results}\label{fig:unnamed-chunk-9}
 \end{figure}
 \end{Schunk}
 
 \begin{Schunk}
 
 
-\begin{center}\includegraphics[width=1\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-9-1} \end{center}
+\begin{center}\includegraphics[width=1\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-10-1} \end{center}
 
 \end{Schunk}
 
 \begin{Schunk}
 
 
-\begin{center}\includegraphics[width=1\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-10-1} \end{center}
+\begin{center}\includegraphics[width=1\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-11-1} \end{center}
 
 \end{Schunk}
 
@@ -508,7 +707,7 @@ Econometrics and Business Statistics\\
 %
 %
 %
-\\\href{mailto:wlii0039@student.monash.edu}{\nolinkurl{wlii0039@student.monash.edu}}
+\\\href{mailto:weihao.li@monash.edu}{\nolinkurl{weihao.li@monash.edu}}
 }
 
 \address{%
