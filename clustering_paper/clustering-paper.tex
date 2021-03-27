@@ -100,7 +100,7 @@ present a visualization heuristic for parameter tuning that enables
 selection of near-optimal values of the parameters, irrespective of the
 exact data source.
 
-Finally, we implement this algorithm in R package \texttt{spotoroo}:
+Finally, we implement this algorithm in R package \CRANpkg{spotoroo}:
 Spatiotemporal Clustering of Satellite Hot Spot Data, available on CRAN.
 By enabling the user to cluster satellite hotspot data across space and
 time, this software provides the ability to relate findings to key
@@ -110,10 +110,11 @@ and fuel sources).
 This paper is organised as follows. The next section provides an
 introduction to the literature on spatiotemporal clustering and bushfire
 modeling and dynamics. Section \protect\hyperlink{algorithm}{Algorithm}
-describes the clustering algorithm, and {[}Package{]} discussed its
-implementation in \texttt{spotoroo} on CRAN.
-\protect\hyperlink{application}{Application} illustrates how the
-resulting data can be used to study bushfire ignition.
+describes the clustering algorithm, and
+\protect\hyperlink{package}{Package} discussed its implementation in
+\CRANpkg{spotoroo} on CRAN. \protect\hyperlink{application}{Application}
+illustrates how the resulting data can be used to study bushfire
+ignition.
 
 \hypertarget{background}{%
 \subsection{Background}\label{background}}
@@ -250,7 +251,7 @@ Thus, the interval \(s_t\) is defined by the following formula:
 \(max(.)\) is the maximum function, \(t\) is the time index and \(T\) is
 the integer length of the time frame.
 
-For example, if the dataset contains 48 hours of hotspot data and the
+For example, if the data set contains 48 hours of hotspot data and the
 \(activeTime = 24~hours\), there will be 48 intervals defined by the
 algorithm, \(\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}\),
 where
@@ -370,16 +371,204 @@ with membership \(-1\) to indicate noise.
 \hypertarget{result}{%
 \subsubsection{Result}\label{result}}
 
-The result of this spatiotemporal clustering algorithm applied on the
+The result of the spatiotemporal clustering algorithm applied on the
 hotspot data is a vector of memberships with length equals to the number
 of observations in the data.
 
+\hypertarget{package}{%
+\subsection{Package}\label{package}}
+
+In this section, we will describe the implementation of the algorithm in
+the R package \CRANpkg{spotoroo}. You can install the released version
+from CRAN.
+
+\begin{verbatim}
+install.packages("spotoroo")
+\end{verbatim}
+
+The following demonstration will assume the package \CRANpkg{spotoroo}
+has been loaded.
+
+\begin{verbatim}
+library(spotoroo)
+\end{verbatim}
+
+\hypertarget{clustering-analysis}{%
+\subsubsection{Clustering Analysis}\label{clustering-analysis}}
+
+The main function of this package is \texttt{hotspot\_cluster()}, which
+can be used to perform the spatiotemporal clustering algorithm on the
+satellite hotspot data.
+
+In this function, three different kinds of arguments need to be
+specified. Arguments \texttt{hotspots}, \texttt{lon}, \texttt{lat} and
+\texttt{obsTime} are used to specify the data set and its relevant
+columns. Arguments \texttt{activeTime}, \texttt{adjDist},
+\texttt{minPts} and \texttt{minTime} have already been defined in the
+\protect\hyperlink{algorithm}{Algorithm} section. Besides, arguments
+\texttt{timeUnit} and \texttt{timestep} are used to convert observed
+time to discrete time index.
+
+\begin{Schunk}
+\begin{Sinput}
+result <- hotspot_cluster(hotspots = hotspots,
+                          lon = "lon",
+                          lat = "lat",
+                          obsTime = "obsTime",
+                          activeTime = 24,
+                          adjDist = 3000,
+                          minPts = 4,
+                          minTime = 3,
+                          timeUnit = "h",
+                          timeStep = 1)
+\end{Sinput}
+\end{Schunk}
+
+The output of this function is a \CRANpkg{spotoroo} object, which is
+actually a \texttt{list} contains a \texttt{data.frame} called
+\texttt{hotspots}, a \texttt{data.frame} called \texttt{ignition} and a
+\texttt{list} called \texttt{setting}.
+
+\begin{Schunk}
+\begin{Sinput}
+result
+\end{Sinput}
+\begin{Soutput}
+#> i spotoroo object: 6 clusters | 1070 hot spots (including noise points)
+\end{Soutput}
+\end{Schunk}
+
+The \texttt{hotspots} data set contains information of each hotspot.
+Particularly, the \texttt{membership} column is the membership.
+
+\begin{Schunk}
+\begin{Sinput}
+head(result$hotspots, 2)
+\end{Sinput}
+\begin{Soutput}
+#>      lon       lat             obsTime timeID membership noise distToIgnition
+#> 1 147.46 -37.46000 2020-02-01 05:20:00    809         -1  TRUE              0
+#> 2 146.48 -37.93999 2020-01-02 06:30:00     90         -1  TRUE              0
+#>   distToIgnitionUnit timeFromIgnition timeFromIgnitionUnit
+#> 1                  m   718.8333 hours                    h
+#> 2                  m   718.8333 hours                    h
+\end{Soutput}
+\end{Schunk}
+
+The \texttt{ignition} data set contains information of each cluster. The
+\texttt{lon} and \texttt{lat} are the coordinate information of the
+ignition points, which are the centroids of the earliest observed
+hotspots of each cluster.
+
+\begin{Schunk}
+\begin{Sinput}
+head(result$ignition, 2)
+\end{Sinput}
+\begin{Soutput}
+#>   membership    lon    lat             obsTime timeID obsInCluster
+#> 1          1 149.30 -37.77 2019-12-29 13:10:00      1          146
+#> 2          2 146.72 -36.84 2020-01-08 01:40:00    229          165
+#>   clusterTimeLen clusterTimeLenUnit
+#> 1 116.1667 hours                  h
+#> 2 148.3333 hours                  h
+\end{Soutput}
+\end{Schunk}
+
+Use the generic function \texttt{summary} to get a brief summary of the
+clustering result.
+
+\begin{Schunk}
+\begin{Sinput}
+summary(result)
+\end{Sinput}
+\begin{Soutput}
+#> CLUSTERS: ALL
+#> OBSERVATIONS: 1070
+#> FROM: 2019-12-29 13:10:00
+#> TO:   2020-02-07 22:50:00
+#>         Min.     1st Qu.        Mean     3rd Qu.        Max.
+#>        111.0       131.0       176.7       233.2       256.0
+#>         Min.     1st Qu.        Mean     3rd Qu.        Max.
+#>        111.2       118.2       131.9       146.1       148.3
+#>         Min.     1st Qu.        Mean     3rd Qu.        Max.
+#>          0.0      2840.3      5058.2      6981.6     13452.7
+#>         Min.     1st Qu.        Mean     3rd Qu.        Max.
+#>          0.0        25.2        62.5        98.2       148.3
+\end{Soutput}
+\end{Schunk}
+
+\hypertarget{extract-a-subset-of-clusters}{%
+\subsubsection{Extract a subset of
+clusters}\label{extract-a-subset-of-clusters}}
+
+To keep all information from the clustering result including noise
+points, use \texttt{extract\_fire()}. It will convert a
+\CRANpkg{spotoroo} object to a \texttt{data.frame}.
+
+\begin{Schunk}
+\begin{Sinput}
+all_fires <- extract_fire(result, noise = TRUE)
+\end{Sinput}
+\end{Schunk}
+
+By providing a vector to the argument \texttt{cluster}, the function
+will extract the corresponding clusters from the clustering result.
+
+\begin{Schunk}
+\begin{Sinput}
+fire_1_and_2 <- extract_fire(result, cluster = c(1, 2), noise = FALSE)
+\end{Sinput}
+\end{Schunk}
+
+\hypertarget{visualize-the-clustering-result}{%
+\subsubsection{Visualize the clustering
+result}\label{visualize-the-clustering-result}}
+
+The \CRANpkg{spotoroo} provides three type of plots.
+
+The ``def'' plot produces a scatter plot of the clusters and their
+ignition locations. It indicates the spatial distribution of the fires.
+
+\begin{Schunk}
+\begin{Sinput}
+plot(result, type = "def")
+\end{Sinput}
+
+
+\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-12-1} \end{center}
+
+\end{Schunk}
+
+The ``mov'' plot produces paths of the movement of the centroid of the
+clusters. The argument \texttt{step} controls the time difference
+between each successive step. The movement can be obtained from the
+\texttt{get\_fire\_mov()} function.
+
+\begin{Schunk}
+\begin{Sinput}
+plot(result, type = "mov", step = 6)
+\end{Sinput}
+
+
+\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-13-1} \end{center}
+
+\end{Schunk}
+
+The ``timeline'' plot produces a timeline for the observed hotpots. It
+is useful in inspecting the bushfire season.
+
+\begin{Schunk}
+\begin{Sinput}
+plot(result, type = "timeline")
+\end{Sinput}
+
+
+\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-14-1} \end{center}
+
+\end{Schunk}
+
 \hypertarget{application}{%
 \subsection{Application}\label{application}}
-
-In this part, we will demonstrate the implementation of this algorithm
-using the R package \CRANpkg{spotoroo} and its potential use in studying
-bushfire ignition.
 
 \hypertarget{data-source}{%
 \subsubsection{Data source}\label{data-source}}
@@ -398,7 +587,7 @@ over 100 watts per square metre) suggested by landscape ecologist and
 spatial scientist Dr.~Grant Williamson \citeyearpar{hotspots} to reduce
 noise from the background.
 
-The final hotspot dataset contains 75936 observations with ID,
+The final hotspot data set contains 75936 observations with ID,
 longitude, latitude and observed date as fields. The overall
 distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
 
@@ -417,7 +606,7 @@ distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
 \subsubsection{Clustering the Himawari-8
 hotspots}\label{clustering-the-himawari-8-hotspots}}
 
-The package can be installed from CRAN using
+The package can be installed from CRAN.
 
 \begin{verbatim}
 install.packages("spotoroo")
@@ -522,180 +711,6 @@ tuning process by using this visualization tool. The final choice of
 \caption[Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours]{Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours.}\label{fig:vis2}
 \end{figure}
 \end{Schunk}
-
-\hypertarget{implementation}{%
-\subsection{Implementation}\label{implementation}}
-
-The algorithm is available in the R package \pkg{spotoroo}.
-
-\hypertarget{installation}{%
-\subsubsection{Installation}\label{installation}}
-
-The package can be installed from CRAN using
-
-\begin{verbatim}
-install.packages("spotoroo")
-\end{verbatim}
-
-and the developmental version from github using
-
-\begin{verbatim}
-install.packages("remotes")
-remotes::install_github("TengMCing/spotoroo")
-\end{verbatim}
-
-\hypertarget{usage}{%
-\subsubsection{Usage}\label{usage}}
-
-A sample data set is provided with the package, to illustrate its use.
-The function \texttt{hotspot\_cluster} performs the spatial clustering.
-Here we have called it fir the sample data, specifying the spatial and
-temporal variables (lon, lat, obsTime), and several parameters to the
-algorithm. A summary of the results is printed when the algorithm
-completes.
-
-\begin{Schunk}
-\begin{Sinput}
-library(spotoroo)
-library(tidyverse)
-result <- hotspot_cluster(hotspots,
-                          lon = "lon",
-                          lat = "lat",
-                          obsTime = "obsTime",
-                          activeTime = 24,
-                          adjDist = 3000,
-                          minPts = 4,
-                          minTime = 3,
-                          ignitionCenter = "mean",
-                          timeUnit = "h",
-                          timeStep = 1)
-\end{Sinput}
-\begin{Soutput}
-#> 
-\end{Soutput}
-\begin{Soutput}
-#> -------------------------------- SPOTOROO 0.1.0 --------------------------------
-\end{Soutput}
-\begin{Soutput}
-#> 
-\end{Soutput}
-\begin{Soutput}
-#> -- Calling Core Function : `hotspot_cluster()` --
-\end{Soutput}
-\begin{Soutput}
-#> 
-\end{Soutput}
-\begin{Soutput}
-#> -- 1 time index = 1 hours
-\end{Soutput}
-\begin{Soutput}
-#> v Transform observed time > time indexes
-\end{Soutput}
-\begin{Soutput}
-#> i 970 time indexes found
-\end{Soutput}
-\begin{Soutput}
-#> 
-\end{Soutput}
-\begin{Soutput}
-#> -- activeTime = 24 time indexes | adjDist = 3000 meters
-\end{Soutput}
-\begin{Soutput}
-#> v Cluster
-\end{Soutput}
-\begin{Soutput}
-#> i 16 clusters found (including noise)
-\end{Soutput}
-\begin{Soutput}
-#> 
-\end{Soutput}
-\begin{Soutput}
-#> -- minPts = 4 hot spots | minTime = 3 time indexes
-\end{Soutput}
-\begin{Soutput}
-#> v Handle noise
-\end{Soutput}
-\begin{Soutput}
-#> i 6 clusters left
-\end{Soutput}
-\begin{Soutput}
-#> i noise proportion : 0.935 %
-\end{Soutput}
-\begin{Soutput}
-#> 
-\end{Soutput}
-\begin{Soutput}
-#> -- ignitionCenter = 'mean'
-\end{Soutput}
-\begin{Soutput}
-#> v Compute ignition points for clusters
-\end{Soutput}
-\begin{Soutput}
-#> i average hot spots : 176.7
-\end{Soutput}
-\begin{Soutput}
-#> i average duration : 131.9 hours
-\end{Soutput}
-\begin{Soutput}
-#> 
-\end{Soutput}
-\begin{Soutput}
-#> -- Time taken = 0 mins 3 secs for 1070 hot spots
-\end{Soutput}
-\begin{Soutput}
-#> i 0.003 secs per hot spot
-\end{Soutput}
-\begin{Soutput}
-#> 
-\end{Soutput}
-\begin{Soutput}
-#> --------------------------------------------------------------------------------
-\end{Soutput}
-\end{Schunk}
-
-For this sample of data, the result contains `r length(unique(result\$))
-
-\begin{Schunk}
-\begin{figure}
-
-{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-9-1} 
-
-}
-
-\caption[Automatic plot of results]{Automatic plot of results}\label{fig:unnamed-chunk-9}
-\end{figure}
-\end{Schunk}
-
-\begin{Schunk}
-
-
-\begin{center}\includegraphics[width=1\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-10-1} \end{center}
-
-\end{Schunk}
-
-\begin{Schunk}
-
-
-\begin{center}\includegraphics[width=1\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-11-1} \end{center}
-
-\end{Schunk}
-
-\hypertarget{functions}{%
-\subsubsection{Functions}\label{functions}}
-
-\hypertarget{summary}{%
-\subsection{Summary}\label{summary}}
-
-\hypertarget{acknowledgements}{%
-\subsection{Acknowledgements}\label{acknowledgements}}
-
-\begin{itemize}
-\tightlist
-\item
-  The code and files to reproduce this work are at XXX
-\item
-  Data on hotspots can be downloaded from XXX
-\end{itemize}
 
 \bibliography{RJreferences}
 

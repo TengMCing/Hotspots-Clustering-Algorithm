@@ -87,9 +87,9 @@ The core functionality of this spatiotemporal clustering algorithm determines wh
 
 As emphasized by @kisilevich2009spatio, the selection of spatial resolution and time granularity -- and relevance of domain knowledge in their choice -- are imperative to the understanding and interpretation of resulting clusters. The incorrect choice for either can be highly influential to the shape and number of clusters discovered, and in the case of satellite hotspot data, will depend on the spatial resolution and temporal frequency at which images are captured. Therefore, we present a visualization heuristic for parameter tuning that enables selection of near-optimal values of the parameters, irrespective of the exact data source.
 
-Finally, we implement this algorithm in R package `spotoroo`: Spatiotemporal Clustering of Satellite Hot Spot Data, available on CRAN. By enabling the user to cluster satellite hotspot data across space and time, this software provides the ability to relate findings to key factors in bushfire ignition and patterns in their spread (e.g. weather and fuel sources).
+Finally, we implement this algorithm in R package \CRANpkg{spotoroo}: Spatiotemporal Clustering of Satellite Hot Spot Data, available on CRAN. By enabling the user to cluster satellite hotspot data across space and time, this software provides the ability to relate findings to key factors in bushfire ignition and patterns in their spread (e.g. weather and fuel sources).
 
-This paper is organised as follows. The next section provides an introduction to the literature on spatiotemporal clustering and bushfire modeling and dynamics. Section [Algorithm] describes the clustering algorithm, and [Package] discussed its implementation in `spotoroo` on CRAN. [Application] illustrates how the resulting data can be used to study bushfire ignition.
+This paper is organised as follows. The next section provides an introduction to the literature on spatiotemporal clustering and bushfire modeling and dynamics. Section [Algorithm] describes the clustering algorithm, and [Package] discussed its implementation in \CRANpkg{spotoroo} on CRAN. [Application] illustrates how the resulting data can be used to study bushfire ignition.
 
 
 
@@ -146,7 +146,7 @@ Thus, the interval $s_t$ is defined by the following formula:
 $$\boldsymbol{S}_t = [max(1,t-activeTime),t],~~t = 1,2,...,T$$
 where $max(.)$ is the maximum function, $t$ is the time index and $T$ is the integer length of the time frame.
 
-For example, if the dataset contains 48 hours of hotspot data and the $activeTime = 24~hours$, there will be 48 intervals defined by the algorithm, $\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}$, where
+For example, if the data set contains 48 hours of hotspot data and the $activeTime = 24~hours$, there will be 48 intervals defined by the algorithm, $\boldsymbol{S}_1,\boldsymbol{S}_2,..,\boldsymbol{S}_{48}$, where
 
 \begin{align*}
 \boldsymbol{S}_1 &= [1,1]\\
@@ -427,7 +427,7 @@ ggplot() +
 
 ```{r}
 ggplot(data = mutate(points_2, group = rep("", 30))) +
-  geom_text(aes(x, y, label = toupper(point_cols2))) +
+  geom_point(aes(x, y)) +
   geom_polygon(data = X1[hull_1,], aes(x=x, y=y), fill = "black", alpha = 0.1) +
   geom_polygon(data = X2[hull_2,], aes(x=x, y=y), fill = "black", alpha = 0.1) +
   coord_fixed() +
@@ -482,7 +482,23 @@ ggplot() +
   labs(col = expression("Hotspots "*" in "*S[t-1]), title = "Step 3: (b)", subtitle = quote(S[t])) +
   scale_color_manual(values = c("red", "blue")) -> p4
 
-(p5 + p3 + p4)
+ggplot() +
+  geom_text(data = points, aes(x, y, label = point_cols)) +
+  geom_point(data = mutate(points_2, group = rep("", 30)),
+             aes(x,y), col = NA) +
+  coord_fixed() +
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(axis.line=element_blank(),
+      axis.text.x=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks=element_blank(),
+      axis.title.x=element_blank(),
+      axis.title.y=element_blank()) +
+  ggtitle(bquote(S[t-1])) -> p7
+  
+
+(p7 + p5 + p3 + p4)
 ```
 
 **4. Handle noise**
@@ -493,11 +509,106 @@ Parameter $minPts$ is the minimum number of hotspots a cluster contains and para
 
 ### Result
 
-The result of this spatiotemporal clustering algorithm applied on the hotspot data is a vector of memberships with length equals to the number of observations in the data.
+The result of the spatiotemporal clustering algorithm applied on the hotspot data is a vector of memberships with length equals to the number of observations in the data.
+
+## Package
+
+In this section, we will describe the implementation of the algorithm in the R package \CRANpkg{spotoroo}. You can install the released version from CRAN.
+
+```r
+install.packages("spotoroo")
+```
+
+The following demonstration will assume the package \CRANpkg{spotoroo} has been loaded.
+
+```r
+library(spotoroo)
+```
+
+### Clustering Analysis
+
+The main function of this package is `hotspot_cluster()`, which can be used to perform the spatiotemporal clustering algorithm on the satellite hotspot data. 
+
+In this function, three different kinds of arguments need to be specified. Arguments `hotspots`, `lon`, `lat` and `obsTime` are used to specify the data set and its relevant columns. Arguments `activeTime`, `adjDist`, `minPts` and `minTime` have already been defined in the [Algorithm] section. Besides, arguments `timeUnit` and `timestep` are used to convert observed time to discrete time index.
+
+```{r echo = TRUE, message = FALSE}
+result <- hotspot_cluster(hotspots = hotspots,
+                          lon = "lon",
+                          lat = "lat",
+                          obsTime = "obsTime",
+                          activeTime = 24,
+                          adjDist = 3000,
+                          minPts = 4,
+                          minTime = 3,
+                          timeUnit = "h",
+                          timeStep = 1)
+```
+
+The output of this function is a \CRANpkg{spotoroo} object, which is actually a `list` contains a `data.frame` called `hotspots`, a `data.frame` called `ignition` and a `list` called `setting`.
+
+```{r echo = TRUE, message=TRUE}
+result
+```
+
+The `hotspots` data set contains information of each hotspot. Particularly, the `membership` column is the membership.
+
+```{r echo = TRUE, message=TRUE}
+head(result$hotspots, 2)
+```
+
+
+The `ignition` data set contains information of each cluster. The `lon` and `lat` are the coordinate information of the ignition points, which are the centroids of the earliest observed hotspots of each cluster.
+
+```{r echo = TRUE, message=TRUE}
+head(result$ignition, 2)
+```
+
+Use the generic function `summary` to get a brief summary of the clustering result.
+
+```{r echo=TRUE}
+summary(result)
+```
+
+
+### Extract a subset of clusters
+
+To keep all information from the clustering result including noise points, use `extract_fire()`. It will convert a \CRANpkg{spotoroo} object to a `data.frame`.
+
+```{r echo=TRUE, message=TRUE}
+all_fires <- extract_fire(result, noise = TRUE)
+```
+
+By providing a vector to the argument `cluster`, the function will extract the corresponding clusters from the clustering result.
+
+```{r echo=TRUE, message=TRUE}
+fire_1_and_2 <- extract_fire(result, cluster = c(1, 2), noise = FALSE)
+```
+
+
+### Visualize the clustering result
+
+The \CRANpkg{spotoroo} provides three type of plots.
+
+The "def" plot produces a scatter plot of the clusters and their ignition locations. It indicates the spatial distribution of the fires.
+
+```{r echo=TRUE}
+plot(result, type = "def")
+```
+
+The "mov" plot produces paths of the movement of the centroid of the clusters. The argument `step` controls the time difference between each successive step. The movement can be obtained from the `get_fire_mov()` function.
+
+```{r echo=TRUE}
+plot(result, type = "mov", step = 6)
+```
+
+The "timeline" plot produces a timeline for the observed hotpots. It is useful in inspecting the bushfire season.
+
+```{r echo=TRUE}
+plot(result, type = "timeline")
+```
 
 ## Application  
 
-In this part, we will demonstrate the implementation of this algorithm using the R package \CRANpkg{spotoroo} and its potential use in studying bushfire ignition.
 
 ### Data source
 
@@ -505,7 +616,7 @@ The illustration will use the wild fire product (produced from Himawari-8) suppl
 
 The data pre-processing procedure includes selecting hotspots within the boundary of Victoria and filtering hotspots with a threshold (irradiance over 100 watts per square metre) suggested by landscape ecologist and spatial scientist Dr. Grant Williamson [-@hotspots]  to reduce noise from the background.
 
-The final hotspot dataset contains 75936 observations with ID, longitude, latitude and observed date as fields. The overall distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
+The final hotspot data set contains 75936 observations with ID, longitude, latitude and observed date as fields. The overall distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
 
 
 ```{r hotspots, fig.cap="The distribution of hotspots in Victoria during 2019-2020 Australia bushfire season."}
@@ -524,7 +635,7 @@ knitr::include_graphics("figures/before_clustering.png")
 
 ### Clustering the Himawari-8 hotspots
 
-The package can be installed from CRAN using 
+The package can be installed from CRAN.
 
 ```
 install.packages("spotoroo")
@@ -730,80 +841,7 @@ knitr::include_graphics("figures/clustering_tuning_1.jpeg")
 knitr::include_graphics("figures/clustering_tuning_2.jpeg")
 ```
 
-## Implementation
 
-The algorithm is available in the R package \pkg{spotoroo}.
-
-### Installation
-
-The package can be installed from CRAN using 
-
-```
-install.packages("spotoroo")
-```
-
-and the developmental version from github using
-
-```
-install.packages("remotes")
-remotes::install_github("TengMCing/spotoroo")
-```
-
-### Usage
-
-A sample data set is provided with the package, to illustrate its use.  The function `hotspot_cluster` performs the spatial clustering. Here we have called it fir the sample data, specifying the spatial and temporal variables (lon, lat, obsTime), and several parameters to the algorithm. A summary of the results is printed when the algorithm completes. 
-
-```{r eval=TRUE, echo=TRUE, message=TRUE}
-library(spotoroo)
-library(tidyverse)
-result <- hotspot_cluster(hotspots,
-                          lon = "lon",
-                          lat = "lat",
-                          obsTime = "obsTime",
-                          activeTime = 24,
-                          adjDist = 3000,
-                          minPts = 4,
-                          minTime = 3,
-                          ignitionCenter = "mean",
-                          timeUnit = "h",
-                          timeStep = 1)
-```
-
-For this sample of data, the result contains `r length(unique(result$))
-
-```{r fig.cap="Automatic plot of results"}
-plot(result, bg = plot_vic_map())
-```
-
-```{r out.width = "100%"}
-plot(result,
-     type = "mov",
-     cluster = 1:6,
-     step = 6,
-     hotspot = TRUE,
-     bg = plot_vic_map())
-```
-
-```{r out.width = "100%"}
-plot(result, "timeline", 
-     dateLabel = "%b %d", 
-     mainBreak = "1 week", 
-     minorBreak = "1 day")
-```
-
-### Functions
-
-## Summary
-
-
-<!--
-This file is only a basic article template. For full details of _The R Journal_ style and information on how to prepare your article for submission, see the [Instructions for Authors](https://journal.r-project.org/share/author-guide.pdf).
--->
-
-## Acknowledgements
-
-- The code and files to reproduce this work are at XXX
-- Data on hotspots can be downloaded from XXX
 
 
 \bibliography{RJreferences}
