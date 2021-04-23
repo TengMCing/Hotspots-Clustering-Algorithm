@@ -50,30 +50,6 @@ library(kableExtra)
 library(ggforce)
 ```
 
-```{r Run-Algorithm, include = FALSE}
-if (any(!file.exists(c("data/VIC_hotspots_before_clustering.csv", 
-                       "data/VIC_hotspots_raw.csv")))){
-  system("Rscript scripts/Clustering-Python-setup.R")
-} 
-
-if (!file.exists("data/clustering_grid.csv")){
-  system("python scripts/clustering_tune.py")
-} 
-
-if (any(!file.exists(c("figures/clustering_tuning_1.jpeg", 
-                       "figures/clustering_tuning_2.jpeg")))){
-  system("Rscript scripts/clustering_tune_vis.R")
-}
-
-if (!file.exists("data/VIC_hotspots_after_clustering.csv")){
-  system("python scripts/main.py")
-}
-
-if (!file.exists("figures/fire_mov.jpeg")){
-  system("Rscript scripts/FireMov.R")
-}
-```
-
 
 ## Introduction
 
@@ -125,7 +101,7 @@ Our spatiotemporal clustering algorithm consists of 4 steps, (1) divide hotspots
 
 **1. Divide hotspots into intervals**
 
-One of the characteristics of the hotspot data is cloud cover could lead to missing observations of a bushfire in several hours. As a result, hotspots observed with a long interval may preserve direct association. To overcome this issue, an integer parameter $activeTime$ is defined to predetermine the maximum time a fire can stay smouldering but undetectable by satellite before flaring up again.
+One of the characteristics of the hotspot data is cloud cover could lead to missing observations of a bushfire in several hours. As a result, two hotspots observed with a large time difference may preserve direct association. To take into account this feature, an integer parameter $activeTime$ is defined to predetermine the maximum time a fire can stay smouldering but undetectable by satellite before flaring up again.
 
 Besides, according to the nature of bushfires, the earlier hotspots are most likely to be the source of the later hotspots nearby. Hence, the temporal dimension of the hotspot data needs to be treated separately. Our method is to define a sequence of intervals in which only spatial relationships remain. In other words, the temporal dimension is dropped completely within an interval. More precisely, the interval $\boldsymbol{S}_t$ is defined by
 
@@ -142,13 +118,13 @@ For example, if the data set contains $48$ hours of hotspot data and the $active
 \boldsymbol{S}_{25} &= [1,25],\\
 \boldsymbol{S}_{26} &= [2,26],\\
 &...\\
-\boldsymbol{S}_{47} &= [23,47]\quad, and\\
+\boldsymbol{S}_{47} &= [23,47], \quad and\\
 \boldsymbol{S}_{48} &= [24,48].
 \end{align*}
 
 **2. Cluster hotspots spatially**
 
-The following step is to perform clustering on each of the interval. Since temporal dimension is not included, only the spatial relationship between hotspots needs to be addressed. An parameter $adjDist$ is introduced to represent the potential distance a fire can spread with respect to the temporal resolution of the data. For example, given the temporal resolution of the data is $10$-minute, let $AdjDist = 3000 m$, then the potential speed of the bushfire is $3000m/10~min = 18km/h$. 
+The next step is to perform clustering on each of the interval. Since temporal dimension is not included, the algorithm only needs to address the the spatial relationship between hotspots. An parameter $adjDist$ is introduced to represent the potential distance a fire can spread with respect to the temporal resolution of the data. For example, given the temporal resolution of the data is $10$-minute, let $AdjDist = 3000 m$, then the potential speed of the bushfire is $3000m/10~min = 18km/h$. 
 
 Given $AdjDist>0~m$ and a interval $\boldsymbol{S}_t$, the algorithm will perform the following substeps: 
 
@@ -500,11 +476,18 @@ The result of the spatiotemporal clustering algorithm applied on the hotspot dat
 
 ## Package
 
-The implementation of our spatiotemporal algorithm is provided in the R package \CRANpkg{spotoroo}. The released version can be installed from CRAN.
+The implementation of our spatiotemporal algorithm is provided in the R package \CRANpkg{spotoroo}. The released version can be installed from CRAN using the following code:
 
 ```r
 install.packages("spotoroo")
 ```
+
+The development version can be installed from Github:
+
+```r
+devtools::install_github("TengMCing/spotoroo")
+```
+
 
 The following demonstration will assume the package \CRANpkg{spotoroo} has been loaded.
 
@@ -539,20 +522,20 @@ The output of this function is a `spotoroo` object, which is actually a `list` c
 result
 ```
 
-The `hotspots` data set contains information of each hotspot. Particularly, the `membership` column is the memberships.
+The `hotspots` data set contains information of each hotspot including the location, the observed time, the time inedex, the membership, the distance to the ignition location and the amount of time since ignition. 
 
 ```{r echo = TRUE, message=TRUE}
 head(result$hotspots, 2)
 ```
 
 
-The `ignition` data set contains information of each cluster. The `lon` and `lat` are the coordinate information of the ignition points, which are the centroids of the earliest observed hotspots of each cluster.
+The `ignition` data set contains information of each cluster including the ignition location, the observed time of ignition, the number of hotspots in the cluster and the time of life of the cluster. In addition, the coordinate information of the ignition points are the centroids of the earliest observed hotspots of each cluster.
 
 ```{r echo = TRUE, message=TRUE}
 head(result$ignition, 2)
 ```
 
-The generic function `summary()` can be used to get a brief report of the clustering result.
+The package also provides a brief report of the clustering result in the generic function `summary()`.
 
 ```r
 summary(result)
@@ -561,7 +544,9 @@ summary(result)
 
 ### Extract a subset of clusters
 
-The function `extract_fire()` enable user to convert a `spotoroo` object to a `data.frame` for further analysis. To keep all information from the clustering result including noise points, set `noise = TRUE`. 
+The clustering result obtained from the `hotspot_cluster()` function is a `spotoroo` object which is not handful to be used in further analysis. To overcome this issue, the package provides a function `extract_fire()` to convert a `spotoroo` object to a `data.frame`. 
+
+When using this function, if you would like to keep all information from the clustering result including noise points, set `noise = TRUE`. 
 
 ```{r echo=TRUE, message=TRUE}
 all_fires <- extract_fire(result, noise = TRUE)
@@ -576,26 +561,32 @@ fire_1_and_2 <- extract_fire(result, cluster = c(1, 2), noise = FALSE)
 
 ### Visualize the clustering result
 
-The \CRANpkg{spotoroo} provides three methods to visualize the clustering result. They all can be produced by the generic function `plot()`.
+The package provides three methods to visualize the clustering result, which all can be produced by the generic function `plot()`.
 
 
-The default plot produced by the function is a scatter plot of the clsuters and their ignition locations showing the spatial distribution of the fires.
+The default plot produced by the function shown in Figure \ref{fig:demodefplot} is a scatter plot of the clusters and their ignition locations showing the spatial distribution of the fires. 
 
-```{r echo=TRUE}
+According to the plot, there are total of 6 clusters where 4 of them are at the bottom right of the plot and 2 of them are at the top left of the plot. They were all observed from December, 2019 to Feburary, 2020 which was during the 2019-2020 Australian bushfire season. Furthermore, the black dots are the ignition location of each of the cluster.
+
+```{r demodefplot, echo=TRUE, fig.cap="Default plot."}
 plot(result)
 ```
 
 
-The path of the fire movement can be produced by setting `type = 'mov'`. The argument `step` controls the time difference between successive step. The movement can be also obtained from the `get_fire_mov()` function.
+Figure \ref{fig:demomovplot} shows the path of the fire movement, which can be produced by setting `type = 'mov'`. The argument `step` controls the time difference between successive step and using small value of `step` will produce complex path. Moreover, the fire movement is computed by the `get_fire_mov()` function.
 
-```{r echo=TRUE}
-plot(result, type = "mov", step = 6)
+In this plot, the triangle is the start point and the circle is the end point. It shows that fire 1, 4 and 5 moved toward the south east, fire 2 and 6 moved toward the north west and fire 3 moved toward the south west.
+
+
+
+```{r demomovplot, echo=TRUE, fig.cap="Fire movement plot."}
+plot(result, type = "mov", step = 12)
 ```
 
 
-The time line of clusters can be produced by setting `type = 'timeline'` It could be used to study the intensity of fire periods. 
+Figure \ref{fig:demotimeline} shows the time line of clusters, which can be produced by setting `type = 'timeline'` to study the intensity of the bushfire season. In this plot, the green dots are hotspots belong to different clusters and the green wave is the density plot for all the hotspots. Besides, the orange dots are noise. From this plot, we can say that most of the hotspots were observed in the mid-January.
 
-```{r echo=TRUE}
+```{r demotimeline, echo=TRUE, fig.cap="Timeline of clusters."}
 plot(result, type = "timeline")
 ```
 
@@ -662,7 +653,7 @@ knitr::include_graphics("figures/before_clustering.png")
 
 ### Clustering the Himawari-8 hotspots
 
-To perform the clustering algorithm on the Himawari-8 hotspot data, we first transform the observed time to time index by setting the time difference between two successive index to be $1$ hour. Then, set `activeTime` to be $24$ time indexes, `adjDist` to be $3000$ memters, `minPts` to be $3$ hotspots and `minTime` to be $3$ indexes for the algorithm. The choice of these parameters will be justified in the section ???.
+To perform the clustering algorithm on the Himawari-8 hotspot data, we first transform the observed time to time index by setting the time difference between two successive index to be $1$ hour. Then, set `activeTime` to be $24$ time indexes, `adjDist` to be $3000$ memters, `minPts` to be $3$ hotspots and `minTime` to be $3$ indexes for the algorithm. The choice of these parameters will be justified in the section [Paremeter tuning].
 
 ```r
 result <- hotspot_cluster(hotspots = him_hotspots,
@@ -689,31 +680,27 @@ result
 
 ### Determining the ignition point and time for individual fires
 
-Based on the clustering result, ignition location for each cluster can be computed. The strategy is to select the earliest hotspot of a cluster as its ignition point. Besides, if there are multiple earliest hotspots belong to the same cluster, the centroids of these hotspots are used as the ignition locations. According to this method, ignition points over 6 months can be produced using 
+Based on the clustering result, ignition location for each cluster can be computed. The strategy is to select the earliest hotspot of a cluster as its ignition point. Besides, if there are multiple earliest hotspots belong to the same cluster, the centroids of these hotspots are used as the ignition locations. According to this method, ignition points over 6 months can be produced using the following code:
 
 ```r
 plot(result, bg = plot_vic_map(), hotspot = FALSE)
 ```
 
-The result is given in Figure \ref{fig:clusteringfinalresults}.
+The result is given in Figure \ref{fig:clusteringfinalresults}. From this plot, we observe that most of the fires were ignited in the east of Victoria and some fires were ignited in the south west of the Victoria. Very few fires started near Melbourne which is located at the middle of Victoria.
 
-And the ignited time of each fire can be produced using
+
+We would like to also study the ignition time for individual fires using the following code:
 
 ```r
 plot(result, type = "timeline", mainBreak = "1 month", dateLabel = "%b %d, %y")`. 
 ```
 
-The result is given in Figure \ref{fig:himtimeline}. 
+The result is given in Figure \ref{fig:himtimeline}. As we can see, the majority of fires were ignited from mid-December of 2019 to mid-January of 2020. Other than that, there is a significant amount of noise found in mid-December, which may implies there are some undetected fires.
 
 
 ```{r clusteringfinalresults, fig.cap=" The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season."}
 plot(result, bg = plot_vic_map(), hotspot = FALSE) 
 ```
-
-
-<!-- ```{r clusteringfinalresultstime, fig.cap="one day"} -->
-<!-- plot(result, from = as.POSIXct("2019-12-29 00:00:01"), to = as.POSIXct("2019-12-29 23:59:59"), bg = plot_vic_map())  -->
-<!-- ``` -->
 
 
 ```{r himtimeline, fig.cap="Timeline of 2019-2020 Victorian bushfire season."}
@@ -729,98 +716,6 @@ Display showing how a fire moves over time, maybe two or more fires
 
 ```{r}
 plot(result, type = "mov", cluster = c(80, 9, 257, 124), step = 6, bg = plot_vic_map())
-```
-
-
-
-
-
-```{r fig.height=8, eval=FALSE}
-tarid <- c(83)
-
-add_lag_cen <- function(x, times = 10) {
-  for (i in 2:times) {
-    x <- mutate(x, "cen_lon_{i}" := lag(!!sym(paste0("cen_lon_", i-1)))) %>%
-      mutate("cen_lat_{i}" := lag(!!sym(paste0("cen_lat_", i-1))))
-  }
-  
-  x
-  
-}
-
-him_hotspots %>%
-  select(fire_id, dettime, lon, lat) %>%
-  filter(fire_id %in% c(tarid)) %>%
-  mutate(new_date = as.character(floor_date(dettime, unit = "12 hours"))) %>%
-  group_by(fire_id, new_date) %>%
-  summarise(cen_lon = mean(lon), cen_lat = mean(lat)) %>%
-  group_by(fire_id) %>%
-  mutate(cen_lon_1 = lag(cen_lon), cen_lat_1 = lag(cen_lat)) %>%
-  add_lag_cen(30) -> cen
-
-him_hotspots %>%
-  select(fire_id, dettime, lon, lat) %>%
-  filter(fire_id %in% c(tarid)) %>%
-  mutate(new_date = as.character(floor_date(dettime, unit = "12 hours"))) %>%
-  left_join(cen) %>%
-ggplot() +
-  geom_jitter(aes(lon, lat, col = as.character(fire_id)), alpha = 0.3) +
-  geom_point(aes(cen_lon, cen_lat), col = "red", size = 1.2) +
-  # geom_point(aes(cen_lon_1, cen_lat_1), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_2, cen_lat_2), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_3, cen_lat_3), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_4, cen_lat_4), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_5, cen_lat_5), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_6, cen_lat_6), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_7, cen_lat_7), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_8, cen_lat_8), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_9, cen_lat_9), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_10, cen_lat_10), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_11, cen_lat_11), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_12, cen_lat_12), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_13, cen_lat_13), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_14, cen_lat_14), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_15, cen_lat_15), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_16, cen_lat_16), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_17, cen_lat_17), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_18, cen_lat_18), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_19, cen_lat_19), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_20, cen_lat_20), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_21, cen_lat_21), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_22, cen_lat_22), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_23, cen_lat_23), col = "blue", size = 1) +
-  # geom_point(aes(cen_lon_24, cen_lat_24), col = "blue", size = 1) +
-  
-  geom_segment(aes(cen_lon, cen_lat, xend = cen_lon_1, yend = cen_lat_1)) +
-  geom_segment(aes(cen_lon_1, cen_lat_1, xend = cen_lon_2, yend = cen_lat_2)) +
-  geom_segment(aes(cen_lon_2, cen_lat_2, xend = cen_lon_3, yend = cen_lat_3)) +
-  geom_segment(aes(cen_lon_3, cen_lat_3, xend = cen_lon_4, yend = cen_lat_4)) +
-  geom_segment(aes(cen_lon_4, cen_lat_4, xend = cen_lon_5, yend = cen_lat_5)) +
-  geom_segment(aes(cen_lon_5, cen_lat_5, xend = cen_lon_6, yend = cen_lat_6)) +
-  geom_segment(aes(cen_lon_6, cen_lat_6, xend = cen_lon_7, yend = cen_lat_7)) +
-  geom_segment(aes(cen_lon_7, cen_lat_7, xend = cen_lon_8, yend = cen_lat_8)) +
-  geom_segment(aes(cen_lon_8, cen_lat_8, xend = cen_lon_9, yend = cen_lat_9)) +
-  geom_segment(aes(cen_lon_9, cen_lat_9, xend = cen_lon_10, yend = cen_lat_10)) +
-  geom_segment(aes(cen_lon_10, cen_lat_10, xend = cen_lon_11, yend = cen_lat_11)) +
-  geom_segment(aes(cen_lon_11, cen_lat_11, xend = cen_lon_12, yend = cen_lat_12)) +
-  geom_segment(aes(cen_lon_12, cen_lat_12, xend = cen_lon_13, yend = cen_lat_13)) +
-  geom_segment(aes(cen_lon_13, cen_lat_13, xend = cen_lon_14, yend = cen_lat_14)) +
-  geom_segment(aes(cen_lon_14, cen_lat_14, xend = cen_lon_15, yend = cen_lat_15)) +
-  geom_segment(aes(cen_lon_15, cen_lat_15, xend = cen_lon_16, yend = cen_lat_16)) +
-  geom_segment(aes(cen_lon_16, cen_lat_16, xend = cen_lon_17, yend = cen_lat_17)) +
-  geom_segment(aes(cen_lon_17, cen_lat_17, xend = cen_lon_18, yend = cen_lat_18)) +
-  geom_segment(aes(cen_lon_18, cen_lat_18, xend = cen_lon_19, yend = cen_lat_19)) +
-  geom_segment(aes(cen_lon_19, cen_lat_19, xend = cen_lon_20, yend = cen_lat_20)) +
-  geom_segment(aes(cen_lon_20, cen_lat_20, xend = cen_lon_21, yend = cen_lat_21)) +
-  geom_segment(aes(cen_lon_21, cen_lat_21, xend = cen_lon_22, yend = cen_lat_22)) +
-  geom_segment(aes(cen_lon_22, cen_lat_22, xend = cen_lon_23, yend = cen_lat_23)) +
-  geom_segment(aes(cen_lon_23, cen_lat_23, xend = cen_lon_24, yend = cen_lat_24)) +
-  geom_segment(aes(cen_lon_24, cen_lat_24, xend = cen_lon_25, yend = cen_lat_25)) +
-  facet_wrap(~new_date) +
-  theme_bw(base_size = 10) +
-  theme(legend.position = "bottom") +
-  scale_color_brewer(palette = "Dark2") +
-  labs(color = "Fire ID")
 ```
 
 
@@ -843,6 +738,8 @@ knitr::include_graphics("figures/clustering_tuning_1.jpeg")
 knitr::include_graphics("figures/clustering_tuning_2.jpeg")
 ```
 
+
+### Paremeter tuning
 
 ## Summary
 

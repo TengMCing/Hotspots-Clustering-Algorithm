@@ -231,11 +231,11 @@ details in the rest of the section.
 \textbf{1. Divide hotspots into intervals}
 
 One of the characteristics of the hotspot data is cloud cover could lead
-to missing observations of a bushfire in several hours. As a result,
-hotspots observed with a long interval may preserve direct association.
-To overcome this issue, an integer parameter \(activeTime\) is defined
-to predetermine the maximum time a fire can stay smouldering but
-undetectable by satellite before flaring up again.
+to missing observations of a bushfire in several hours. As a result, two
+hotspots observed with a large time difference may preserve direct
+association. To take into account this feature, an integer parameter
+\(activeTime\) is defined to predetermine the maximum time a fire can
+stay smouldering but undetectable by satellite before flaring up again.
 
 Besides, according to the nature of bushfires, the earlier hotspots are
 most likely to be the source of the later hotspots nearby. Hence, the
@@ -262,16 +262,16 @@ the algorithm,
 \boldsymbol{S}_{25} &= [1,25],\\
 \boldsymbol{S}_{26} &= [2,26],\\
 &...\\
-\boldsymbol{S}_{47} &= [23,47]\quad, and\\
+\boldsymbol{S}_{47} &= [23,47], \quad and\\
 \boldsymbol{S}_{48} &= [24,48].
 \end{align*}
 
 \textbf{2. Cluster hotspots spatially}
 
-The following step is to perform clustering on each of the interval.
-Since temporal dimension is not included, only the spatial relationship
-between hotspots needs to be addressed. An parameter \(adjDist\) is
-introduced to represent the potential distance a fire can spread with
+The next step is to perform clustering on each of the interval. Since
+temporal dimension is not included, the algorithm only needs to address
+the the spatial relationship between hotspots. An parameter \(adjDist\)
+is introduced to represent the potential distance a fire can spread with
 respect to the temporal resolution of the data. For example, given the
 temporal resolution of the data is \(10\)-minute, let
 \(AdjDist = 3000 m\), then the potential speed of the bushfire is
@@ -382,10 +382,16 @@ of observations in the data.
 
 The implementation of our spatiotemporal algorithm is provided in the R
 package \CRANpkg{spotoroo}. The released version can be installed from
-CRAN.
+CRAN using the following code:
 
 \begin{verbatim}
 install.packages("spotoroo")
+\end{verbatim}
+
+The development version can be installed from Github:
+
+\begin{verbatim}
+devtools::install_github("TengMCing/spotoroo")
 \end{verbatim}
 
 The following demonstration will assume the package \CRANpkg{spotoroo}
@@ -446,8 +452,10 @@ result
 \end{Soutput}
 \end{Schunk}
 
-The \texttt{hotspots} data set contains information of each hotspot.
-Particularly, the \texttt{membership} column is the memberships.
+The \texttt{hotspots} data set contains information of each hotspot
+including the location, the observed time, the time inedex, the
+membership, the distance to the ignition location and the amount of time
+since ignition.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -463,10 +471,11 @@ head(result$hotspots, 2)
 \end{Soutput}
 \end{Schunk}
 
-The \texttt{ignition} data set contains information of each cluster. The
-\texttt{lon} and \texttt{lat} are the coordinate information of the
-ignition points, which are the centroids of the earliest observed
-hotspots of each cluster.
+The \texttt{ignition} data set contains information of each cluster
+including the ignition location, the observed time of ignition, the
+number of hotspots in the cluster and the time of life of the cluster.
+In addition, the coordinate information of the ignition points are the
+centroids of the earliest observed hotspots of each cluster.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -482,8 +491,8 @@ head(result$ignition, 2)
 \end{Soutput}
 \end{Schunk}
 
-The generic function \texttt{summary()} can be used to get a brief
-report of the clustering result.
+The package also provides a brief report of the clustering result in the
+generic function \texttt{summary()}.
 
 \begin{verbatim}
 summary(result)
@@ -493,10 +502,15 @@ summary(result)
 \subsubsection{Extract a subset of
 clusters}\label{extract-a-subset-of-clusters}}
 
-The function \texttt{extract\_fire()} enable user to convert a
-\texttt{spotoroo} object to a \texttt{data.frame} for further analysis.
-To keep all information from the clustering result including noise
-points, set \texttt{noise\ =\ TRUE}.
+The clustering result obtained from the \texttt{hotspot\_cluster()}
+function is a \texttt{spotoroo} object which is not handful to be used
+in further analysis. To overcome this issue, the package provides a
+function \texttt{extract\_fire()} to convert a \texttt{spotoroo} object
+to a \texttt{data.frame}.
+
+When using this function, if you would like to keep all information from
+the clustering result including noise points, set
+\texttt{noise\ =\ TRUE}.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -517,52 +531,80 @@ fire_1_and_2 <- extract_fire(result, cluster = c(1, 2), noise = FALSE)
 \subsubsection{Visualize the clustering
 result}\label{visualize-the-clustering-result}}
 
-The \CRANpkg{spotoroo} provides three methods to visualize the
-clustering result. They all can be produced by the generic function
-\texttt{plot()}.
+The package provides three methods to visualize the clustering result,
+which all can be produced by the generic function \texttt{plot()}.
 
-The default plot produced by the function is a scatter plot of the
-clsuters and their ignition locations showing the spatial distribution
-of the fires.
+The default plot produced by the function shown in Figure
+\ref{fig:demodefplot} is a scatter plot of the clusters and their
+ignition locations showing the spatial distribution of the fires.
+
+According to the plot, there are total of 6 clusters where 4 of them are
+at the bottom right of the plot and 2 of them are at the top left of the
+plot. They were all observed from December, 2019 to Feburary, 2020 which
+was during the 2019-2020 Australian bushfire season. Furthermore, the
+black dots are the ignition location of each of the cluster.
 
 \begin{Schunk}
 \begin{Sinput}
 plot(result)
 \end{Sinput}
+\begin{figure}
 
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/demodefplot-1} 
 
-\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-10-1} \end{center}
+}
 
+\caption[Default plot]{Default plot.}\label{fig:demodefplot}
+\end{figure}
 \end{Schunk}
 
-The path of the fire movement can be produced by setting
+Figure \ref{fig:demomovplot} shows the path of the fire movement, which
+can be produced by setting
 \texttt{type\ =\ \textquotesingle{}mov\textquotesingle{}}. The argument
-\texttt{step} controls the time difference between successive step. The
-movement can be also obtained from the \texttt{get\_fire\_mov()}
-function.
+\texttt{step} controls the time difference between successive step and
+using small value of \texttt{step} will produce complex path. Moreover,
+the fire movement is computed by the \texttt{get\_fire\_mov()} function.
+
+In this plot, the triangle is the start point and the circle is the end
+point. It shows that fire 1, 4 and 5 moved toward the south east, fire 2
+and 6 moved toward the north west and fire 3 moved toward the south
+west.
 
 \begin{Schunk}
 \begin{Sinput}
-plot(result, type = "mov", step = 6)
+plot(result, type = "mov", step = 12)
 \end{Sinput}
+\begin{figure}
 
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/demomovplot-1} 
 
-\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-11-1} \end{center}
+}
 
+\caption[Fire movement plot]{Fire movement plot.}\label{fig:demomovplot}
+\end{figure}
 \end{Schunk}
 
-The time line of clusters can be produced by setting
-\texttt{type\ =\ \textquotesingle{}timeline\textquotesingle{}} It could
-be used to study the intensity of fire periods.
+Figure \ref{fig:demotimeline} shows the time line of clusters, which can
+be produced by setting
+\texttt{type\ =\ \textquotesingle{}timeline\textquotesingle{}} to study
+the intensity of the bushfire season. In this plot, the green dots are
+hotspots belong to different clusters and the green wave is the density
+plot for all the hotspots. Besides, the orange dots are noise. From this
+plot, we can say that most of the hotspots were observed in the
+mid-January.
 
 \begin{Schunk}
 \begin{Sinput}
 plot(result, type = "timeline")
 \end{Sinput}
+\begin{figure}
 
+{\centering \includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/demotimeline-1} 
 
-\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-12-1} \end{center}
+}
 
+\caption[Timeline of clusters]{Timeline of clusters.}\label{fig:demotimeline}
+\end{figure}
 \end{Schunk}
 
 \hypertarget{application}{%
@@ -613,7 +655,8 @@ difference between two successive index to be \(1\) hour. Then, set
 \texttt{activeTime} to be \(24\) time indexes, \texttt{adjDist} to be
 \(3000\) memters, \texttt{minPts} to be \(3\) hotspots and
 \texttt{minTime} to be \(3\) indexes for the algorithm. The choice of
-these parameters will be justified in the section ???.
+these parameters will be justified in the section
+\protect\hyperlink{paremeter-tuning}{Paremeter tuning}.
 
 \begin{verbatim}
 result <- hotspot_cluster(hotspots = him_hotspots,
@@ -649,21 +692,29 @@ be computed. The strategy is to select the earliest hotspot of a cluster
 as its ignition point. Besides, if there are multiple earliest hotspots
 belong to the same cluster, the centroids of these hotspots are used as
 the ignition locations. According to this method, ignition points over 6
-months can be produced using
+months can be produced using the following code:
 
 \begin{verbatim}
 plot(result, bg = plot_vic_map(), hotspot = FALSE)
 \end{verbatim}
 
-The result is given in Figure \ref{fig:clusteringfinalresults}.
+The result is given in Figure \ref{fig:clusteringfinalresults}. From
+this plot, we observe that most of the fires were ignited in the east of
+Victoria and some fires were ignited in the south west of the Victoria.
+Very few fires started near Melbourne which is located at the middle of
+Victoria.
 
-And the ignited time of each fire can be produced using
+We would like to also study the ignition time for individual fires using
+the following code:
 
 \begin{verbatim}
 plot(result, type = "timeline", mainBreak = "1 month", dateLabel = "%b %d, %y")`. 
 \end{verbatim}
 
-The result is given in Figure \ref{fig:himtimeline}.
+The result is given in Figure \ref{fig:himtimeline}. As we can see, the
+majority of fires were ignited from mid-December of 2019 to mid-January
+of 2020. Other than that, there is a significant amount of noise found
+in mid-December, which may implies there are some undetected fires.
 
 \begin{Schunk}
 \begin{figure}
@@ -695,7 +746,7 @@ Display showing how a fire moves over time, maybe two or more fires
 \begin{Schunk}
 
 
-\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-15-1} \end{center}
+\begin{center}\includegraphics[width=0.8\linewidth]{clustering_paper_files/figure-latex/unnamed-chunk-12-1} \end{center}
 
 \end{Schunk}
 
@@ -756,6 +807,9 @@ tuning process by using this visualization tool. The final choice of
 \caption[Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours]{Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours.}\label{fig:vis2}
 \end{figure}
 \end{Schunk}
+
+\hypertarget{paremeter-tuning}{%
+\subsubsection{Paremeter tuning}\label{paremeter-tuning}}
 
 \hypertarget{summary}{%
 \subsection{Summary}\label{summary}}

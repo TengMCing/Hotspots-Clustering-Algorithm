@@ -1,7 +1,7 @@
 library(tidyverse)
 library(spotoroo)
 
-myhotspots <- read_csv("data/VIC_hotspots_raw.csv")
+myhotspots <- read_csv(here::here("clustering_paper/data/VIC_hotspots_raw.csv"))
 
 myhotspots <- select(myhotspots,
                      obsTime = `#obstime`, 
@@ -20,4 +20,4 @@ result <- hotspot_cluster(myhotspots,
                           timeUnit = "h",
                           timeStep = 1)
 
-saveRDS(result, file = "data/result.rds")
+saveRDS(result, file = here::here("clustering_paper/data/result.rds"))
