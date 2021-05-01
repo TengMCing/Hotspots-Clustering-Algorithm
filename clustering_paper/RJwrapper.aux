@@ -22,11 +22,10 @@
 \citation{climate2020}
 \citation{Deb2020}
 \citation{Abram2021}
+\citation{Giglio2016}
 \citation{Xu2017}
 \citation{Wickramasinghe2016}
 \citation{Jang2019}
-\citation{jaxa}
-\citation{Kurihara2020}
 \citation{ester1996density}
 \citation{Loboda2007}
 \@writefile{toc}{\contentsline {chapter}{\numberline {1}A clustering algorithm to organize satellite hotspots data for the purpose of tracking bushfires remotely}{1}{section*.1}\protected@file@percent }
@@ -37,14 +36,15 @@
 \@writefile{brf}{\backcite{climate2020}{{1}{2.0.1}{subsection.2.0.1}}}
 \@writefile{brf}{\backcite{Deb2020}{{1}{2.0.1}{subsection.2.0.1}}}
 \@writefile{brf}{\backcite{Abram2021}{{1}{2.0.1}{subsection.2.0.1}}}
+\@writefile{brf}{\backcite{Giglio2016}{{1}{2.0.1}{subsection.2.0.1}}}
 \@writefile{brf}{\backcite{Xu2017}{{1}{2.0.1}{subsection.2.0.1}}}
 \@writefile{brf}{\backcite{Wickramasinghe2016}{{1}{2.0.1}{subsection.2.0.1}}}
 \@writefile{brf}{\backcite{Jang2019}{{1}{2.0.1}{subsection.2.0.1}}}
-\@writefile{brf}{\backcite{jaxa}{{1}{2.0.1}{subsection.2.0.1}}}
-\@writefile{brf}{\backcite{Kurihara2020}{{1}{2.0.1}{subsection.2.0.1}}}
 \@writefile{brf}{\backcite{ester1996density}{{1}{2.0.1}{subsection.2.0.1}}}
 \@writefile{brf}{\backcite{Loboda2007}{{1}{2.0.1}{subsection.2.0.1}}}
 \citation{kisilevich2009spatio}
+\citation{jaxa}
+\citation{Kurihara2020}
 \citation{datamining2012}
 \citation{datamining2012}
 \citation{kisilevich2009spatio}
@@ -55,8 +55,9 @@
 \citation{stdbscan}
 \citation{ester1998incremental}
 \citation{Kalnis2005}
-\citation{kisilevich2009spatio}
 \@writefile{brf}{\backcite{kisilevich2009spatio}{{2}{2.0.1}{subsection.2.0.1}}}
+\@writefile{brf}{\backcite{jaxa}{{2}{2.0.1}{subsection.2.0.1}}}
+\@writefile{brf}{\backcite{Kurihara2020}{{2}{2.0.1}{subsection.2.0.1}}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.0.2}Background}{2}{subsection.2.0.2}\protected@file@percent }
 \newlabel{background}{{2.0.2}{2}{Background}{subsection.2.0.2}{}}
 \@writefile{toc}{\contentsline {subsubsection}{Spatiotemporal clustering}{2}{subsection.2.0.2}\protected@file@percent }
@@ -71,13 +72,14 @@
 \@writefile{brf}{\backcite{stdbscan}{{2}{2.0.2}{subsection.2.0.2}}}
 \@writefile{brf}{\backcite{ester1998incremental}{{2}{2.0.2}{subsection.2.0.2}}}
 \@writefile{brf}{\backcite{Kalnis2005}{{2}{2.0.2}{subsection.2.0.2}}}
-\citation{Loboda2007}
+\citation{nisa2014}
 \citation{hermawati2016}
-\@writefile{toc}{\contentsline {subsubsection}{Bushfire dynamics (clustering in literature)}{3}{subsection.2.0.2}\protected@file@percent }
-\newlabel{bushfire-dynamics-clustering-in-literature}{{2.0.2}{3}{Bushfire dynamics (clustering in literature)}{subsection.2.0.2}{}}
-\@writefile{brf}{\backcite{kisilevich2009spatio}{{3}{2.0.2}{subsection.2.0.2}}}
-\@writefile{brf}{\backcite{Loboda2007}{{3}{2.0.2}{subsection.2.0.2}}}
+\citation{Loboda2007}
+\@writefile{toc}{\contentsline {subsubsection}{Clustering of satellite hotspot data}{3}{subsection.2.0.2}\protected@file@percent }
+\newlabel{clustering-of-satellite-hotspot-data}{{2.0.2}{3}{Clustering of satellite hotspot data}{subsection.2.0.2}{}}
+\@writefile{brf}{\backcite{nisa2014}{{3}{2.0.2}{subsection.2.0.2}}}
 \@writefile{brf}{\backcite{hermawati2016}{{3}{2.0.2}{subsection.2.0.2}}}
+\@writefile{brf}{\backcite{Loboda2007}{{3}{2.0.2}{subsection.2.0.2}}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.0.3}Algorithm}{3}{subsection.2.0.3}\protected@file@percent }
 \newlabel{algorithm}{{2.0.3}{3}{Algorithm}{subsection.2.0.3}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces An example of step 2 given 20 hotspots in interval $\boldsymbol  {S}_t$. (a) A hotspot is selected randomly as the first item of list $\boldsymbol  {L}$ and the pointer $\boldsymbol  {P}$. Hotspots in list $\boldsymbol  {L}$ are in red. Pointer $\boldsymbol  {P}$ is drawn with larger marker size. (b) Nearby hotspots of the pointer $\boldsymbol  {P}$ are appended to the list $\boldsymbol  {L}$. (c) Move pointer $\boldsymbol  {P}$ to the next item of list $\boldsymbol  {L}$ and append the nearby hotspots to list $\boldsymbol  {L}$. (d) The cluster is identified via repeating substep (c). (e) Clear the list $\boldsymbol  {L}$, then randomly select an unassigned hotspot to identify another cluster. (f) The final clustering result is produced via repeating substep (d). The labels show the cluster each hotspot belongs to.\relax }}{4}{figure.caption.2}\protected@file@percent }
@@ -139,18 +141,20 @@
 \newlabel{paremeter-tuning}{{2.0.5}{12}{Paremeter tuning}{figure.caption.11}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.0.6}Summary}{12}{subsection.2.0.6}\protected@file@percent }
 \newlabel{summary}{{2.0.6}{12}{Summary}{subsection.2.0.6}{}}
-\bibcite{datamining2012}{{8}{2012}{{Han et~al.}}{{Han, Kamber, and Pei}}}
-\bibcite{hermawati2016}{{9}{2016}{{Hermawati and Sitanggang}}{{}}}
-\bibcite{Jang2019}{{10}{2019}{{Jang et~al.}}{{Jang, Kang, Im, Lee, Yoon, and Kim}}}
-\bibcite{Kalnis2005}{{11}{2005}{{Kalnis et~al.}}{{Kalnis, Mamoulis, and Bakiras}}}
-\bibcite{kisilevich2009spatio}{{12}{2009}{{Kisilevich et~al.}}{{Kisilevich, Mansmann, Nanni, and Rinzivillo}}}
-\bibcite{Kurihara2020}{{13}{2020}{{Kurihara et~al.}}{{Kurihara, Tanada, Murakami, and Kachi}}}
-\bibcite{Loboda2007}{{14}{2007}{{Loboda and Csiszar}}{{}}}
-\bibcite{jaxa}{{15}{2020}{{P-Tree System}}{{}}}
-\bibcite{Wickramasinghe2016}{{16}{2016}{{Wickramasinghe et~al.}}{{Wickramasinghe, Jones, Reinke, and Wallace}}}
-\bibcite{hotspots}{{17}{2020}{{Williamson}}{{}}}
+\bibcite{Giglio2016}{{8}{2016}{{Giglio et~al.}}{{Giglio, Schroeder, and Justice}}}
+\bibcite{datamining2012}{{9}{2012}{{Han et~al.}}{{Han, Kamber, and Pei}}}
+\bibcite{hermawati2016}{{10}{2016}{{Hermawati and Sitanggang}}{{}}}
+\bibcite{Jang2019}{{11}{2019}{{Jang et~al.}}{{Jang, Kang, Im, Lee, Yoon, and Kim}}}
+\bibcite{Kalnis2005}{{12}{2005}{{Kalnis et~al.}}{{Kalnis, Mamoulis, and Bakiras}}}
+\bibcite{kisilevich2009spatio}{{13}{2009}{{Kisilevich et~al.}}{{Kisilevich, Mansmann, Nanni, and Rinzivillo}}}
+\bibcite{Kurihara2020}{{14}{2020}{{Kurihara et~al.}}{{Kurihara, Tanada, Murakami, and Kachi}}}
+\bibcite{Loboda2007}{{15}{2007}{{Loboda and Csiszar}}{{}}}
+\bibcite{nisa2014}{{16}{2014}{{Nisa et~al.}}{{Nisa, Andrianto, and Mardhiyyah}}}
 \@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours}}{13}{figure.caption.11}\protected@file@percent }
 \newlabel{fig:vis2}{{10}{13}{Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours}{figure.caption.11}{}}
-\bibcite{Xu2017}{{18}{2017}{{Xu and Zhong}}{{}}}
+\bibcite{jaxa}{{17}{2020}{{P-Tree System}}{{}}}
+\bibcite{Wickramasinghe2016}{{18}{2016}{{Wickramasinghe et~al.}}{{Wickramasinghe, Jones, Reinke, and Wallace}}}
+\bibcite{hotspots}{{19}{2020}{{Williamson}}{{}}}
+\bibcite{Xu2017}{{20}{2017}{{Xu and Zhong}}{{}}}
 \ttl@finishall
 \gdef \@abspage@last{14}

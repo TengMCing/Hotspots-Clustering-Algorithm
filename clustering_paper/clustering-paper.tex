@@ -34,39 +34,37 @@ understand movement patterns in remote areas are important for
 developing effective strategies to mitigate bushfire impact.
 
 Remote satellite data provides a potential solution to the challenge of
-active fire detection and monitoring, and the Himawari-8 satellite
-represents a significant improvement in the technology by which this can
-be done. Launched in 2015 by the Japan Meteorological Agency, its
-10-minute temporal resolution enables almost real-time monitoring of
-fires across East Asia and Australia. For this reason, development of
-algorithms to process pixels of its satellite imagery into hotspots --
-i.e.~pixels that represent likely fires -- is an active area of research
-(see for example \citet{Xu2017}, \citet{Wickramasinghe2016},
-\citet{Jang2019}). We make use of the Japan Aerospace Exploration Agency
-(JAXA) wildfire product \citep{jaxa} that identifies the location and
-fire radiative power (FRP) of hotspots according to an algorithm
-developed by \citet{Kurihara2020}.
+active fire detection and monitoring. Development of algorithms that
+process satellite imagery into hotspots -- pixels that represent likely
+fires -- is an active area of research (see for example
+\citet{Giglio2016}, \citet{Xu2017}, \citet{Wickramasinghe2016},
+\citet{Jang2019}). Detection of bushfire ignition and movement requires
+the clustering of satellite hotspots into meaningful clusters, which may
+then be considered in their entirety or summarized by a trajectory.
 
-Detection of bushfire ignition and movement requires the clustering of
-satellite hotspots into meaningful clusters, which may then be
-considered in their entirety or summarized by a trajectory. In this
-paper, we propose a spatiotemporal clustering algorithm to represent
-bushfires as clusters of hotspot pixels in order to (1) determine points
-of bushfire ignition and (2) track their movement over space and time.
-Inspired by two existing clustering algorithms, namely Density Based
-Spatial Clustering of Applications with Noise (DBSCAN)
+In this paper, we propose a spatiotemporal clustering algorithm to
+represent bushfires as clusters of hotspot pixels in order to determine
+points of bushfire ignition and track their movement over space and
+time. Inspired by two existing clustering algorithms, namely Density
+Based Spatial Clustering of Applications with Noise (DBSCAN)
 \citep{ester1996density} and Fire Spread Reconstruction (FSR)
 \citep{Loboda2007}, our algorithm extends the functionality of DBSCAN's
 spatial clustering parameters to the additional temporal dimension,
-while drawing upon the fire movement dynamics presented in FSR and
-generalizing its specification of spatiotemporal parameters, thereby
-providing an intuitive, straightforward, and extendable approach to the
-complex problem of bushfire identification and monitoring. In clustering
-hotspots into bushfires of arbitrary shape and size, we capture key
-bushfire behavior: fire evolution occurs only forwards in time; fires
-can smolder undetectably for awhile, burn out, and merge with other
-bushfires; and solitary pixels that may not represent true fires should
-not be represented as a bushfire cluster.
+while drawing upon the fire movement dynamics presented in FSR. We
+generalize the latter's specification of spatiotemporal parameters,
+thereby providing an intuitive, straightforward, and extendable approach
+to the complex problem of bushfire identification and monitoring that
+may be applied to any satellite wildfire product. In clustering hotspots
+into bushfires of arbitrary shape and size, we capture key bushfire
+behavior: fire evolution occurs only forwards in time; fires can smolder
+undetectably for awhile, burn out, and merge with other bushfires; and
+solitary pixels that may not represent true fires should not be
+represented as a bushfire cluster. We implement this algorithm in R
+package \CRANpkg{spotoroo}: Spatiotemporal Clustering of Satellite Hot
+Spot Data, available on CRAN. By enabling the user to cluster satellite
+hotspot data across space and time, this software provides the ability
+to relate findings to key factors in bushfire ignition and patterns in
+their spread (e.g.~weather and fuel sources).
 
 The core functionality of this spatiotemporal clustering algorithm
 determines whether a hotspot represents a new ignition point or a
@@ -84,7 +82,7 @@ frame. If so, it retains its cluster membership from the previous time
 frame; if not, the hotspot adopts the membership of the nearest hotspot
 with which it has been clustered. If no such neighbor exists, a hotspot
 represents the start of a new fire. It is important to note that each
-hotspot does not necessarily represent an individual, so similar to
+hotspot does not necessarily represent an individual fire, so similar to
 DBSCAN's identification of noise, those clusters that does not pass the
 threshold of a minimum number of hotspots or exist for a minimum amount
 of time are labeled noise.
@@ -100,21 +98,24 @@ present a visualization heuristic for parameter tuning that enables
 selection of near-optimal values of the parameters, irrespective of the
 exact data source.
 
-Finally, we implement this algorithm in R package \CRANpkg{spotoroo}:
-Spatiotemporal Clustering of Satellite Hot Spot Data, available on CRAN.
-By enabling the user to cluster satellite hotspot data across space and
-time, this software provides the ability to relate findings to key
-factors in bushfire ignition and patterns in their spread (e.g.~weather
-and fuel sources).
-
-This paper is organised as follows. The next section provides an
-introduction to the literature on spatiotemporal clustering and bushfire
-modeling and dynamics. Section \protect\hyperlink{algorithm}{Algorithm}
-describes the clustering algorithm, and
-\protect\hyperlink{package}{Package} discussed its implementation in
-\CRANpkg{spotoroo} on CRAN. \protect\hyperlink{application}{Application}
-illustrates how the resulting data can be used to study bushfire
-ignition.
+This paper is organized as follows. The next section provides an
+introduction to the literature on spatiotemporal clustering and
+applications to bushfire modeling. Section
+\protect\hyperlink{algorithm}{Algorithm} details the steps of the
+clustering algorithm, and \protect\hyperlink{package}{Package}
+introduces its implementation in \CRANpkg{spotoroo} on CRAN, including
+demonstration of the package's key functions and visualization
+capabilities. We illustrate the clustering algorithm's functionality to
+study bushfire ignition and spread in Victoria, Australia throughout the
+2020 bushfire season in \protect\hyperlink{application}{Application},
+and present a visual heuristic to inform parameter selection. We make
+use of the Japan Aerospace Exploration Agency (JAXA) Himawari-8
+satellite wildfire product \citep{jaxa} that identifies the location and
+fire radiative power (FRP) of hotspots across East Asia and Australia
+according to an algorithm developed by \citet{Kurihara2020}. Finally, we
+discuss how the results of the clustering algorithm support researchers
+in their study of factors that influence the start and spread of
+wildfires.
 
 \hypertarget{background}{%
 \subsection{Background}\label{background}}
@@ -133,8 +134,7 @@ limitations of partitioning and hierarchical methods. We therefore focus
 on a review of density-based methods and refer the reader to
 \citet{datamining2012} for algorithms in other categories and
 \citet{kisilevich2009spatio} for appropriate extensions to
-spatiotemporal data. \emph{(Note here why grid-based methods would not
-be good for resolution of hotspot data.)}
+spatiotemporal data.
 
 Density-based methods separate regions constituting a high density of
 points separated by low-density regions by identifying pairwise
@@ -147,14 +147,13 @@ knowledge to determine the hyperparameters, (2) arbitrary shape of
 clusters and (3) computational efficiency. DBSCAN defines a maximum
 radius \(\epsilon\) to construct a neighborhood around each point. It
 distinguishes between a core point, for which the number of points that
-fall in its neighborhood meets a minimum threshold, and a boundary
-point, whose neighborhood does not meet this threshold, but can be
-reached via overlapping neighborhoods from that of a core point.
+fall in its neighborhood meets a minimum threshold (\emph{MinPts}), and
+a boundary point, whose neighborhood does not meet this threshold, but
+can be reached via overlapping neighborhoods from that of a core point.
 Intersecting neighborhoods are defined to be a cluster, while points
 that cannot be assigned to a cluster are identified as noise. DBSCAN
-also provides a heuristic to inform selection of \emph{(Note: Only
-mention DBSCAN's computational complexity for comparison if we have way
-to measure ours.)}
+also provides a heuristic to inform selection of \(\epsilon\) and
+\emph{MinPts}.
 
 What is often identified as a limitation of DBSCAN -- its inability to
 differentiate between clusters of different densities and those adjacent
@@ -178,21 +177,32 @@ objects, ST-DBSCAN introduces a second metric that considers similarity
 of variables associated with temporal neighbors; that is, points
 observed in consecutive time steps.
 
-More similar in their goals are (still to write up): Incremental DBSCAN
-\citep{ester1998incremental}, Discovering Moving Clusters in
-Spatiotemporal Data \citep{Kalnis2005}
+Extensions of DBSCAN have been developed to handle incremental updates
+of clusters where time may impact the density of a neighborhood, and
+therefore the clustering membership. Incremental DBSCAN
+\citep{ester1998incremental} adjusts DBSCAN to allow for insertion and
+deletion of points in batch updates in a data warehouse context, with a
+focus on computational efficiency for implementation. \citet{Kalnis2005}
+proposes exact and approximate algorithms to identify and extract moving
+clusters -- that is, a set of objects that move together other over
+space and time. The authors first partition the movement history of a
+set of objects into temporal snapshots and use DBSCAN at each time step
+to cluster objects. Clusters from consecutive snapshots are merged
+together if they share a minimum number of common objects, called an
+integrity threshold.
 
-\hypertarget{bushfire-dynamics-clustering-in-literature}{%
-\subsubsection{Bushfire dynamics (clustering in
-literature)}\label{bushfire-dynamics-clustering-in-literature}}
+\hypertarget{clustering-of-satellite-hotspot-data}{%
+\subsubsection{Clustering of satellite hotspot
+data}\label{clustering-of-satellite-hotspot-data}}
 
-\citet{kisilevich2009spatio} notes the importance of domain expertise in
-selection of parameters; for this reason, we also consider literature on
-bushfire dynamics \emph{(TBD)} and satellite hotspot clustering for
-wildfire monitoring.
+DBSCAN has been employed for the clustering and visualization of
+satellite hotspot data (see for example \citet{nisa2014} and
+\citet{hermawati2016}), although as discussed, it does not enable the
+tracking of fire ignition and movement over time.
 
-Fire Spread Reconstruction (FSR) \citep{Loboda2007} was developed to
-identify fire spread in the Russian boreal forest based on active fire
+Fire Spread Reconstruction (FSR) \citep{Loboda2007} addresses this
+limitation with the development of a tree-based algorithm that
+identifies fire spread in the Russian boreal forest based on active fire
 detections from MODIS (Moderate Resolution Imaging Spectroradiometer),
 which has a temporal frequency of six hours. The algorithm proposed by
 the authors constructs a tree based on three rules: (1) the earliest
@@ -205,20 +215,12 @@ the earliest hotspot is defined as the ignition point.
 
 FSR's selection of parameters is specific to the region and data product
 used, and is therefore not immediately generalizable to other sources of
-satellite hotspot data. By implementation, each fire has a maximum
-length of four days \emph{(is this true? implementation of sliding
-temporal window, if any, was not clear to me)}, which does not
-accurately represent what has been known to occur in Australia, where
-the (OCTOBER FIRE NAME) burned for months (citation). Additionally, due
-to its sequential construction of fires, two that may start in different
-locations but result in overlapping coverage are considered to be a
-single fire by the time they intersect. As a result, coverage of each
-fire may increase dramatically in a short time period, which does not
-accurately reflect the natural speed of a bushfire. \emph{(let's discuss
-this)}
-
-(Also \citep{hermawati2016} to show that DBSCAN has been used for fire
-clustering?)
+satellite hotspot data. Additionally, due to its sequential construction
+of fires, two that may start in different locations but result in
+overlapping coverage are considered to be a single fire by the time they
+intersect. As a result, coverage of each fire may increase dramatically
+in a short time period, which does not accurately reflect the natural
+speed of a bushfire.
 
 \hypertarget{algorithm}{%
 \subsection{Algorithm}\label{algorithm}}
