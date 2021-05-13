@@ -101,15 +101,17 @@ Our spatiotemporal clustering algorithm consists of 4 steps, (1) divide hotspots
 
 **1. Divide hotspots into intervals**
 
-One of the characteristics of the hotspot data is cloud cover could lead to missing observations of a bushfire in several hours. As a result, two hotspots observed with a large time difference may preserve direct association. To take into account this feature, an integer parameter $activeTime$ is defined to predetermine the maximum time a fire can stay smouldering but undetectable by satellite before flaring up again.
+One of the characteristics of the hotspot data is cloud cover could lead to missing observations of a bushfire in several hours. As a result, two hotspots observed with a large time difference may preserve direct association. To take this feature into account, an integer parameter $activeTime$ is defined to predetermine the maximum time a fire can stay smouldering but undetectable by satellite before flaring up again.
 
-Besides, according to the nature of bushfires, the earlier hotspots are most likely to be the source of the later hotspots nearby. Hence, the temporal dimension of the hotspot data needs to be treated separately. Our method is to define a sequence of intervals in which only spatial relationships remain. In other words, the temporal dimension is dropped completely within an interval. More precisely, the interval $\boldsymbol{S}_t$ is defined by
+Besides, according to the nature of bushfires, the earlier hotspots are most likely to be the source of the later hotspots nearby. Hence, the temporal dimension of the hotspot data needs to be treated separately. Our method is to define a sequence of intervals in which only spatial relationships remain. In other words, the temporal dimension is dropped completely within any given interval. 
 
-$$\boldsymbol{S}_t = [max(1,t-activeTime),t]\quad(t = 1,2,...,T),$$
+Let $\boldsymbol{S}_t$ be a sequence of intervals defined by
 
-where $max(.)$ is the maximum function, $t$ is the time index, and $T$ is the integer length of the time frame.
+$$\boldsymbol{S}_t = [max(1,t-activeTime),t]\quad t = 1,2,...,T,$$
 
-For example, if the data set contains $48$ hours of hotspot data and the $activeTime = 24~hours$, there will be $48$ intervals defined by the algorithm, $\boldsymbol{S}_1,\boldsymbol{S}_2,\ldots,\boldsymbol{S}_{48}$, where
+where $max(.)$ is the maximum function, $t$ is an integer time index, and $T$ is the integer length of the time frame.
+
+Suppose the data set contains $48$ hours of hotspot data and let $activeTime = 24~hours$, then there will be $48$ intervals defined by the algorithm, $\boldsymbol{S}_1,\boldsymbol{S}_2,\ldots,\boldsymbol{S}_{48}$, where
 
 \begin{align*}
 \boldsymbol{S}_1 &= [1,1],\\
@@ -124,9 +126,9 @@ For example, if the data set contains $48$ hours of hotspot data and the $active
 
 **2. Cluster hotspots spatially**
 
-The next step is to perform clustering on each of the interval. Since temporal dimension is not included, the algorithm only needs to address the the spatial relationship between hotspots. An parameter $adjDist$ is introduced to represent the potential distance a fire can spread with respect to the temporal resolution of the data. For example, given the temporal resolution of the data is $10$-minute, let $AdjDist = 3000 m$, then the potential speed of the bushfire is $3000m/10~min = 18km/h$. 
+The next step is to perform clustering on each of the interval. Since temporal dimension is not included, the algorithm only needs to address the the spatial relationship between hotspots. A parameter $adjDist$ is introduced to represent the potential distance a fire can spread with respect to the temporal resolution of the data. For example, given the temporal resolution of the data is $10$-minute, let $AdjDist = 3000 m$, then the potential speed of the bushfire is $3000m/10~min = 18km/h$. 
 
-Given $AdjDist>0~m$ and a interval $\boldsymbol{S}_t$, the algorithm will perform the following substeps: 
+Given $AdjDist>0~m$ and an interval $\boldsymbol{S}_t$, the algorithm will perform the following substeps: 
 
 (a) Append a randomly selected hotspot $h_i$ to a empty list $\boldsymbol{L}$, where $h_i$ is the $i$th hotspot in the interval $\boldsymbol{S}_t$. And let pointer $\boldsymbol{P}$ points to the first element of the list $\boldsymbol{L}$.
 
@@ -136,12 +138,12 @@ Given $AdjDist>0~m$ and a interval $\boldsymbol{S}_t$, the algorithm will perfor
 
 (d) Repeat (b) and (c) until the pointer $\boldsymbol{P}$ reaches to the end of the list $\boldsymbol{L}$.
 
-(e) For all hotspots $h_i \in \boldsymbol{L}$, assign a new membership to them to denote that they belong to a new cluster. Pop these hotspots from the interval $\boldsymbol{S}_t$. Repeat (a) to (e) if interval $\boldsymbol{S}_t$ is not empty.
+(e) For all hotspots $h_i \in \boldsymbol{L}$, assign a new membership to them. Pop these hotspots from the interval $\boldsymbol{S}_t$. Repeat (a) to (e) until interval $\boldsymbol{S}_t$ is empty.
 
 (f) Recover the interval $\boldsymbol{S}_t$ and record the memberships.
 
 
-Figure \ref{fig:step2figs} gives an concise example of this step.
+Figure \ref{fig:step2figs} gives a concise example of this step.
 
 ```{r step2figs, fig.cap="An example of step 2 given 20 hotspots in interval $\\boldsymbol{S}_t$. (a) A hotspot is selected randomly as the first item of list $\\boldsymbol{L}$ and the pointer $\\boldsymbol{P}$. Hotspots in list $\\boldsymbol{L}$ are in red. Pointer $\\boldsymbol{P}$ is drawn with larger marker size. (b) Nearby hotspots of the pointer $\\boldsymbol{P}$ are appended to the list $\\boldsymbol{L}$. (c) Move pointer $\\boldsymbol{P}$ to the next item of list $\\boldsymbol{L}$ and append the nearby hotspots to list $\\boldsymbol{L}$. (d) The cluster is identified via repeating substep (c). (e) Clear the list $\\boldsymbol{L}$, then randomly select an unassigned hotspot to identify another cluster. (f) The final clustering result is produced via repeating substep (d). The labels show the cluster each hotspot belongs to."}
 
@@ -309,13 +311,13 @@ library(patchwork)
 
 **3. Update memberships**
 
-With spatial clustering results of each interval, the next step is to update the memberships by bringing in information from earlier intervals.
+With spatial clustering results of each interval being produced, the next step is to update the memberships by bringing in information from earlier intervals.
 
 This step starts from $t=2$ till $t=T$. Given the interval $\boldsymbol{S}_t$, the algorithm will perform the following substeps:
 
-(a) Let $h_i$ carries over from its membership in $\boldsymbol{S}_{t-1}$, if $h_i$ belongs to $\boldsymbol{S}_{t-1}$, where $h_i$ is the $i$th hotspot in the interval $\boldsymbol{S}_t$. These hotspots are collected by a set $\boldsymbol{H}_s = \{h_s^1,h_s^2,...\}$.
+(a) For all $h_i$ belongs to $\boldsymbol{S}_{t-1}$, where $h_i$ is the $i$th hotspot in the interval $\boldsymbol{S}_{t}$, let $h_i$ carries over from its membership in $\boldsymbol{S}_{t-1}$. These hotspots are collected by a set $\boldsymbol{H}_s = \{h_s^1,h_s^2,...\}$.
 
-(b) Let $\boldsymbol{H}_c = \{h_c^1,h_c^2,...\}$, where $h_c^i$ is the $i$th hotspot in set $\boldsymbol{H}_c$ and $h_c^i$ belongs to $\boldsymbol{S}_t$ but does not belong to $\boldsymbol{S}_{t-1}$. If $h_c^i$ being clustered into the same component with $h_s^j$ in interval $\boldsymbol{S}_t$, let $h_c^i$ carries over from the membership of the nearest $h_s^j$, where $h_s^j$ is the $j$th hotspot in the set $\boldsymbol{H}_s$. 
+(b) Let $\boldsymbol{H}_c = \{h_c^1,h_c^2,...\}$, where $h_c^i$ is the $i$th hotspot in set $\boldsymbol{H}_c$ and all $h_c^i$ belong to $\boldsymbol{S}_t$ but do not belong to $\boldsymbol{S}_{t-1}$. For all $h_c^i$ that being clustered into the same component with $h_s^j$ in interval $\boldsymbol{S}_t$, let $h_c^i$ carries over from the membership of the nearest $h_s^j$, where $h_s^j$ is the $j$th hotspot in the set $\boldsymbol{H}_s$. 
 
 Figure \ref{fig:step3figs} gives an example of this step.
 
@@ -466,7 +468,7 @@ ggplot() +
 
 **4. Handle noise**
 
-After performing step 3, all membership labels will be produced. However, a noticeable amount of small clusters could exist. We provide a noise filter in the last step to address this issue. 
+After performing step 3, all membership labels will be produced. However, a noticeable amount of small clusters could exist. To address this issue, we provide a noise filter in the last step. 
 
 Parameter $minPts$ is the minimum number of hotspots a cluster contains and parameter $minTime$ is the minimum time a cluster lasts. Any cluster that doesn't satisfy this two conditions will be assigned with membership $-1$ to indicate noise. 
 
@@ -495,13 +497,13 @@ The following demonstration will assume the package \CRANpkg{spotoroo} has been 
 library(spotoroo)
 ```
 
-### Clustering Analysis
+### Performing spatiotemporal cluster analysis
 
 The main function of this package is `hotspot_cluster()`, which can be used to perform the spatiotemporal clustering algorithm on the satellite hotspot data. 
 
-In this function, three different kinds of arguments need to be specified. Arguments `hotspots`, `lon`, `lat`, and `obsTime` are used to specify the hotspot data set and its relevant columns. Arguments `activeTime`, `adjDist`, `minPts`, and `minTime` have already been defined in the [Algorithm] section. Besides, arguments `timeUnit` and `timestep` are used to convert observed time to discrete time index.
+In this function, three different kinds of arguments need to be specified. Arguments `hotspots`, `lon`, `lat`, and `obsTime` are used to specify the hotspot data set and its relevant columns. Arguments `activeTime`, `adjDist`, `minPts`, and `minTime` have already been defined in the [Algorithm] section. Besides, arguments `timeUnit` and `timestep` are used to convert observed time to integer time index.
 
-The following code is an example of the use of `hotspot_cluster()`. It set the `activeTime` to be $24$ time indexes, the `adjDist` to be $3000$ meters, the `minPts` to be $4$ hotspots, the `minTime` to be $3$ time indexes, and $1$ time index to be $1$ hour.
+The following code is an example of the use of `hotspot_cluster()`. It set the `activeTime` to be $24$ time indexes, the `adjDist` to be $3000$ meters, the `minPts` to be $4$ hotspots, the `minTime` to be $3$ time indexes, and the difference between two adjacent time indexes to be $1$ hour.
 
 ```{r echo = TRUE, message = FALSE}
 result <- hotspot_cluster(hotspots = hotspots,
@@ -516,7 +518,7 @@ result <- hotspot_cluster(hotspots = hotspots,
                           timeStep = 1)
 ```
 
-The output of this function is a `spotoroo` object, which is actually a `list` contains a `data.frame` called `hotspots`, a `data.frame` called `ignition`, and a `list` called `setting`.
+The output of this function is a `spotoroo` object, which is actually a `list` contains two `data.frame`s called `hotspots` and `ignition`, and a `list` called `setting`. 
 
 ```{r echo = TRUE, message=TRUE}
 result
@@ -542,40 +544,40 @@ summary(result)
 ```
 
 
-### Extract a subset of clusters
+### Extracting a subset of clusters
 
-The clustering result obtained from the `hotspot_cluster()` function is a `spotoroo` object which is not handful to be used in further analysis. To overcome this issue, the package provides a function `extract_fire()` to convert a `spotoroo` object to a `data.frame`. 
+The clustering result obtained from the `hotspot_cluster()` function is a `spotoroo` object which is inconvenient to be used in further analysis. To overcome this issue, the package provides a function `extract_fire()` to convert a `spotoroo` object to a `data.frame`. 
 
-When using this function, if you would like to keep all information from the clustering result including noise points, set `noise = TRUE`. 
+Users could choose to keep all information from the clustering result including noise points by setting `noise = TRUE` and leaving other arguments as default.
 
 ```{r echo=TRUE, message=TRUE}
 all_fires <- extract_fire(result, noise = TRUE)
 ```
 
-By providing a vector to the argument `cluster`, the function will extract the corresponding clusters from the clustering result.
+By providing a vector of indexes to the argument `cluster`, the function will extract the corresponding clusters from the clustering result.
 
 ```{r echo=TRUE, message=TRUE}
 fire_1_and_2 <- extract_fire(result, cluster = c(1, 2), noise = FALSE)
 ```
 
 
-### Visualize the clustering result
+### Visualizing the clustering result
 
 The package provides three methods to visualize the clustering result, which all can be produced by the generic function `plot()`.
 
 
-The default plot produced by the function shown in Figure \ref{fig:demodefplot} is a scatter plot of the clusters and their ignition locations showing the spatial distribution of the fires. 
+The default plot produced by the function shown in Figure \ref{fig:demodefplot} is a scatter plot of the clusters and their ignition locations representing the spatial distribution of the fires. 
 
-According to the plot, there are total of 6 clusters where 4 of them are at the bottom right of the plot and 2 of them are at the top left of the plot. They were all observed from December, 2019 to Feburary, 2020 which was during the 2019-2020 Australian bushfire season. Furthermore, the black dots are the ignition location of each of the cluster.
+According to Figure \ref{fig:demodefplot}, there are total of 6 clusters where 4 of them are at the bottom right of the plot and 2 of them are at the top left of the plot. They were all observed from December, 2019 to Feburary, 2020 which was during the 2019-2020 Australian bushfire season. Furthermore, the black dots are the ignition location of each of the cluster.
 
 ```{r demodefplot, echo=TRUE, fig.cap="Default plot."}
 plot(result)
 ```
 
 
-Figure \ref{fig:demomovplot} shows the path of the fire movement, which can be produced by setting `type = 'mov'`. The argument `step` controls the time difference between successive step and using small value of `step` will produce complex path. Moreover, the fire movement is computed by the `get_fire_mov()` function.
+Figure \ref{fig:demomovplot} shows the path of the fire movement, which can be produced by setting `type = 'mov'`. The fire movement is computed by the `get_fire_mov()` function. The argument `step` controls the time difference between successive steps. Moreover, using small value of `step` will produce complex path. 
 
-In this plot, the triangle is the start point and the circle is the end point. It shows that fire 1, 4 and 5 moved toward the south east, fire 2 and 6 moved toward the north west and fire 3 moved toward the south west.
+In this plot, the triangle is the start point and the circle is the end point. It shows the overall movement of each fire, where fire 1, 4 and 5 moved toward the south east, fire 2 and 6 moved toward the north west and fire 3 moved toward the south west.
 
 
 
@@ -584,7 +586,7 @@ plot(result, type = "mov", step = 12)
 ```
 
 
-Figure \ref{fig:demotimeline} shows the time line of clusters, which can be produced by setting `type = 'timeline'` to study the intensity of the bushfire season. In this plot, the green dots are hotspots belong to different clusters and the green wave is the density plot for all the hotspots. Besides, the orange dots are noise. From this plot, we can say that most of the hotspots were observed in the mid-January.
+The plot shown in Figure \ref{fig:demotimeline} is time line of clusters, which can be produced by setting `type = 'timeline'`. It could be used to study the intensity of the bushfire season. The green dots are hotspots except for noise and the green wave is the corresponding density. Noise are drawn with orange dots. From this plot, it can be concluded that most of the hotspots were observed in the mid-January.
 
 ```{r demotimeline, echo=TRUE, fig.cap="Timeline of clusters."}
 plot(result, type = "timeline")
@@ -592,7 +594,7 @@ plot(result, type = "timeline")
 
 ## Application  
 
-In this section, an application will be illustrated to show how this algorithm can be used to study bushfire ignition.
+In this section, an application will be illustrated to show how this algorithm can be used to study empirical satellite hotspots data.
 
 ### Data source
 
@@ -600,7 +602,7 @@ The following illustration will use the wild fire product (produced from Himawar
 
 The data pre-processing procedure includes selecting hotspots within the boundary of Victoria and filtering hotspots with a threshold (irradiance over 100 watts per square metre) suggested by landscape ecologist and spatial scientist Dr. Grant Williamson [-@hotspots] to reduce noise from the background.
 
-The final hotspot data set contains 75936 observations with ID, longitude, latitude and observed date as fields. The overall distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
+The final hotspot data set contains 75936 observations with ID, longitude, latitude and observed date as fields. The overall distribution of these hotspots is given in Figure \ref{fig:hotspots}.
 
 ```{r}
 if (!file.exists("data/VIC_result.rda")) {
@@ -653,7 +655,7 @@ knitr::include_graphics("figures/before_clustering.png")
 
 ### Clustering the Himawari-8 hotspots
 
-To perform the clustering algorithm on the Himawari-8 hotspot data, we first transform the observed time to time index by setting the time difference between two successive index to be $1$ hour. Then, set `activeTime` to be $24$ time indexes, `adjDist` to be $3000$ memters, `minPts` to be $3$ hotspots and `minTime` to be $3$ indexes for the algorithm. The choice of these parameters will be justified in the section [Paremeter tuning].
+To perform the clustering algorithm on the Himawari-8 hotspot data, we first transform the observed time to time index by setting the time difference between two successive indexes to be $1$ hour. Then, set `activeTime` to be $24$ time indexes, `adjDist` to be $3000$ memters, `minPts` to be $3$ hotspots and `minTime` to be $3$ indexes for the algorithm. The choice of `adjDist` and `activeTime` will be justified in the section [Effects of parameter choices].
 
 ```r
 result <- hotspot_cluster(hotspots = him_hotspots,
@@ -686,7 +688,7 @@ Based on the clustering result, ignition location for each cluster can be comput
 plot(result, bg = plot_vic_map(), hotspot = FALSE)
 ```
 
-The result is given in Figure \ref{fig:clusteringfinalresults}. From this plot, we observe that most of the fires were ignited in the east of Victoria and some fires were ignited in the south west of the Victoria. Very few fires started near Melbourne which is located at the middle of Victoria.
+The result is given in Figure \ref{fig:clusteringfinalresults}. From this plot, we observe that most of the fires were ignited in the east of Victoria and some fires were ignited in the south west of the Victoria. These areas are forests and mountains. Very few fires started near the Melbourne city which is located at the middle of Victoria.
 
 
 We would like to also study the ignition time for individual fires using the following code:
@@ -703,44 +705,59 @@ plot(result, bg = plot_vic_map(), hotspot = FALSE)
 ```
 
 
-```{r himtimeline, fig.cap="Timeline of 2019-2020 Victorian bushfire season."}
+```{r himtimeline, fig.cap="Timeline of fires observed in Victoria during the 2019-2020 Australian bushfire season."}
 plot(result, type = "timeline", mainBreak = "1 month", dateLabel = "%b %d, %y")
 ```
 
 
 ### Tracking fire movement
 
+We further study the movement of 4 most intensive fires located in the east of Victoria using the following code:
 
 
-Display showing how a fire moves over time, maybe two or more fires
+```{r firemovem, echo = TRUE, fig.cap="Movements of 4 most intensive fires observed in Victoria during the 2019-2020 Australian bushfire season."}
 
-```{r}
-plot(result, type = "mov", cluster = c(80, 9, 257, 124), step = 6, bg = plot_vic_map())
+plot(result, 
+     type = "mov", 
+     cluster = c(order(result$ignition$obsInCluster, 
+                       decreasing = TRUE)[1:4]), 
+     step = 12, 
+     bg = plot_vic_map())
 ```
 
+The result is given in Figure \ref{fig:firemovem}. All of the fires are observed in the late December and the beginning of the January. According to the plot, 3 out of the 4 fires changed their direction at some points. Fire 163 spread toward different directions simultaneously so the centroid of the cluster didn't change much.
 
 ### Allocating resources for future fire prevention
 
-Merging data with camp sites, CFA, roads, ... 
+Advanced analysis can be performed by merging the clustering result with data like recreation sites, fire stations, roads, weather and vegetation types. We conducted an research [@conart] by this method to predict the causes of bushfires in Victoria during the 2019-2020 bushfire season when the fire investigations had not been done. It yields meaningful suggestions for future fire prevention.
 
 ### Effects of parameter choices
 
-There are two parameters that being introduced in the outline of the algorithm, which are $AdjDist$ and $ActiveTime$. The optimal choice of these two parameters is not known but can be tuned using a visualization tool.
+There are two parameters that being introduced in the outline of the algorithm, which are $AdjDist$ and $ActiveTime$. The optimal choice of these two parameters is unknown but can be tuned using a visualization tool.
 
-Considering the relationships between $AdjDist$, $ActiveTime$ and the number of clusters in the clustering result, increase either $AdjDist$ or $ActiveTime$ will usually reduce the number of clusters. However, if there are large gaps between clusters spatially and temporally, increase these two parameters will not significantly reduce the number of clusters. Given one of the metrics to evaluate the goodness of the clustering result is the gap between clusters, the optimal choice of $AdjDist$ and $ActiveTime$ can be chosen when they have minimum impact on the number of clusters. However, under this setting, the optimal $ActiveTime$ and $AdjDist$ will approach to infinitely as the number of clusters approach to 1. Hence, a restriction needs to be applied on this optimization. Increase of $ActiveTime$ and $AdjDist$ will only be allowed when there is a major fall of the number of clusters. Based on this rule, a visualization tool inspired by the scree plot used in the principal component analysis is developed. Similar to the scree plot, users need to determine the $ActiveTime$ and $AdjDist$ to capture most of the decrease of the number of clusters. Figure \ref{fig:vis1} and \ref{fig:vis2} show the parameter tuning process by using this visualization tool. The final choice of $ActiveTime$ is $24$ hours and $AdjDist$ is $3000$ metres.
+Consider the relationships between $AdjDist$, $ActiveTime$ and the percentage of noise points. Increase either $AdjDist$ or $ActiveTime$ will usually reduce the percentage of noise points since spatial and temporal tolerance is greater. However, if the noise points are spatially and temporally far from the meaningful clusters, increase these two parameters will not significantly reduce the number of clusters. Hence, to identify the real noise points, we only need to find the smallest pair of $AdjDist$ and $ActiveTime$ such that after those values the percentage of noise points no longer decrease significantly. Based on this rule, a visualization tool inspired by the scree plot used in the principal component analysis is developed. Similar to the scree plot, users need to determine the values of $ActiveTime$ and $AdjDist$ when they capture most of the decrease of the percentage of the noise points. Figure \ref{fig:vis1} and \ref{fig:vis2} show the parameter tuning process by using this visualization tool. The final choice of $ActiveTime$ is $24$ hours and $AdjDist$ is $3000$ metres.
 
-
-```{r vis1, fig.cap="A visualization tool for parameter tuning . It works like a scree plot. Major falls of the number of clusters are observed when $AdjDist < 3000$ so the reasonable choice of $AdjDist$ is 3000m."}
-knitr::include_graphics("figures/clustering_tuning_1.jpeg")
+```{r vis1, fig.cap="A visualization tool for parameter tuning . It works like a scree plot. Major falls of the percentage of noise points are observed when $AdjDist < 3000$ so the reasonable choice of $AdjDist$ is 3000m."}
+mygrid <- read_csv("data/grid.csv")
+ggplot(mygrid) +
+  geom_line(aes(adjDist, noise_prop, col = factor(activeTime))) +
+  scale_x_continuous(breaks = seq(1000, 10000, 1000)) +
+  labs(col = "activeTime") +
+  ylab("Percentage of noise points")
 ```
 
-```{r vis2, fig.cap="Major falls of the number of clusteres are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours."}
-knitr::include_graphics("figures/clustering_tuning_2.jpeg")
+```{r vis2, fig.cap="Major falls of the percentage of noise points are observed when $ActiveTime < 24$, so the reasonable choice of $ActiveTime$ is 24 hours."}
+ggplot(filter(mygrid, adjDist > 2000)) +
+  geom_line(aes(activeTime, noise_prop, col = factor(adjDist))) +
+  scale_x_continuous(breaks = seq(6, 48, 6)) +
+  labs(col = "adjDist") +
+  ylab("Percentage of noise points")
 ```
 
 
-### Paremeter tuning
 
 ## Summary
+
+\clearpage
 
 \bibliography{RJreferences}
