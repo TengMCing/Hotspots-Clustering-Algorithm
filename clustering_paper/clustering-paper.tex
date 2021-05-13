@@ -225,27 +225,32 @@ speed of a bushfire.
 \hypertarget{algorithm}{%
 \subsection{Algorithm}\label{algorithm}}
 
-Our spatiotemporal clustering algorithm consists of 4 steps, (1) divide
-hotspots into intervals, (2) cluster hotspots spatially, (3) update
-memberships, and (4) handle noise. These four steps will be described in
-details in the rest of the section.
+Our spatiotemporal clustering algorithm consists of four steps, which
+will be described in detail in this section: (1) divide hotspots
+according to a user-defined temporal interval, (2) cluster hotspots
+spatially within each time frame, (3) combine results of consecutive
+time frames to update hotspot cluster memberships, and (4) identify
+remaining noise.
 
 \textbf{1. Divide hotspots into intervals}
 
-One of the characteristics of the hotspot data is cloud cover could lead
-to missing observations of a bushfire in several hours. As a result, two
-hotspots observed with a large time difference may preserve direct
-association. To take into account this feature, an integer parameter
-\(activeTime\) is defined to predetermine the maximum time a fire can
-stay smouldering but undetectable by satellite before flaring up again.
+One of the challenges of satellite hotspot data is cloud cover may
+obscure a bushfire over several hours, leading to missing observations
+in the data. As a result, two hotspots observed with a large time
+difference may preserve direct association.
+\textit{What is this trying to say, re: direct association?} To account
+for this possibility, an integer parameter \(activeTime\) is
+predetermined to define the maximum time a fire may stay smouldering --
+while remaining undetectable by satellite before flaring up again --
+such that we classify the hostpots as the same fire.
 
-Besides, according to the nature of bushfires, the earlier hotspots are
-most likely to be the source of the later hotspots nearby. Hence, the
-temporal dimension of the hotspot data needs to be treated separately.
-Our method is to define a sequence of intervals in which only spatial
-relationships remain. In other words, the temporal dimension is dropped
-completely within an interval. More precisely, the interval
-\(\boldsymbol{S}_t\) is defined by
+Due to the nature of bushfires, earlier hotspots are likely to be the
+source of later hotspots nearby, so it makes sense to treat the temporal
+dimension of the hotspot data separately. Our method is to define a
+sequence of time intervals; within each, we consider only the spatial
+relationship among hotspots. In other words, the temporal dimension is
+dropped from consideration within an interval. More precisely, the
+interval \(\boldsymbol{S}_t\) is defined by
 
 \[\boldsymbol{S}_t = [max(1,t-activeTime),t]\quad(t = 1,2,...,T),\]
 
@@ -253,8 +258,8 @@ where \(max(.)\) is the maximum function, \(t\) is the time index, and
 \(T\) is the integer length of the time frame.
 
 For example, if the data set contains \(48\) hours of hotspot data and
-the \(activeTime = 24~hours\), there will be \(48\) intervals defined by
-the algorithm,
+the \(activeTime = 24~hours\), there would be \(48\) intervals defined
+by the algorithm,
 \(\boldsymbol{S}_1,\boldsymbol{S}_2,\ldots,\boldsymbol{S}_{48}\), where
 
 \begin{align*}
@@ -270,17 +275,16 @@ the algorithm,
 
 \textbf{2. Cluster hotspots spatially}
 
-The next step is to perform clustering on each of the interval. Since
-temporal dimension is not included, the algorithm only needs to address
-the the spatial relationship between hotspots. An parameter \(adjDist\)
-is introduced to represent the potential distance a fire can spread with
-respect to the temporal resolution of the data. For example, given the
-temporal resolution of the data is \(10\)-minute, let
-\(AdjDist = 3000 m\), then the potential speed of the bushfire is
-\(3000m/10~min = 18km/h\).
+The next step is to perform clustering of hotspots within each of these
+time intervals; the algorithm only needs to address the the spatial
+relationship between hotspots. A parameter \(adjDist\) is introduced to
+represent the potential distance a fire can spread with respect to the
+temporal resolution of the data. For example, given the temporal
+resolution of the data is \(10\)-minute, let \(AdjDist = 3000 m\), then
+the potential speed of the bushfire is \(3000m/10~min = 18km/h\).
 
 Given \(AdjDist>0~m\) and a interval \(\boldsymbol{S}_t\), the algorithm
-will perform the following substeps:
+performs the following substeps:
 
 \begin{enumerate}
 \def\labelenumi{(\alph{enumi})}
@@ -323,12 +327,13 @@ Figure \ref{fig:step2figs} gives an concise example of this step.
 
 \textbf{3. Update memberships}
 
-With spatial clustering results of each interval, the next step is to
-update the memberships by bringing in information from earlier
-intervals.
+Once the results of spatial clustering are obtained for each time
+interval, the next step is to update hotspot memberships by bringing in
+information from earlier intervals.
 
-This step starts from \(t=2\) till \(t=T\). Given the interval
-\(\boldsymbol{S}_t\), the algorithm will perform the following substeps:
+This step starts from \(t=2\) and progresses through \(t=T\). Given the
+interval \(\boldsymbol{S}_t\), the algorithm performs the following
+substeps:
 
 \begin{enumerate}
 \def\labelenumi{(\alph{enumi})}
@@ -363,34 +368,34 @@ Figure \ref{fig:step3figs} gives an example of this step.
 
 \textbf{4. Handle noise}
 
-After performing step 3, all membership labels will be produced.
-However, a noticeable amount of small clusters could exist. We provide a
-noise filter in the last step to address this issue.
+After performing step 3, all hotspots will have a cluster membership
+label. However, there may exist some amount of small clusters, for which
+we define a noise filter in the last step.
 
-Parameter \(minPts\) is the minimum number of hotspots a cluster
-contains and parameter \(minTime\) is the minimum time a cluster lasts.
-Any cluster that doesn't satisfy this two conditions will be assigned
-with membership \(-1\) to indicate noise.
+Parameter \(minPts\) is the minimum number of hotspots a cluster may
+contain and parameter \(minTime\) is the minimum number of hours a
+cluster may exist. Any cluster that do not satisfy these two conditions
+are assigned a membership label of \(-1\) to indicate noise.
 
 \hypertarget{result}{%
 \subsubsection{Result}\label{result}}
 
-The result of the spatiotemporal clustering algorithm applied on the
-hotspot data is a vector of memberships with length equals to the number
-of observations in the data.
+This spatiotemporal clustering algorithm applied to satellite hotspot
+data results in a vector of cluster memberships, the length of which is
+equal to the number of observations in the original data.
 
 \hypertarget{package}{%
 \subsection{Package}\label{package}}
 
-The implementation of our spatiotemporal algorithm is provided in the R
-package \CRANpkg{spotoroo}. The released version can be installed from
-CRAN using the following code:
+Our spatiotemporal clustering algorithm is implemented in the R package
+\CRANpkg{spotoroo}. The released version can be installed from CRAN
+using the following code:
 
 \begin{verbatim}
 install.packages("spotoroo")
 \end{verbatim}
 
-The development version can be installed from Github:
+The development version can be installed from Github with:
 
 \begin{verbatim}
 devtools::install_github("TengMCing/spotoroo")
@@ -406,24 +411,25 @@ library(spotoroo)
 \hypertarget{clustering-analysis}{%
 \subsubsection{Clustering Analysis}\label{clustering-analysis}}
 
-The main function of this package is \texttt{hotspot\_cluster()}, which
-can be used to perform the spatiotemporal clustering algorithm on the
-satellite hotspot data.
+The main function of the \CRANpkg{spotoroo} package is
+\texttt{hotspot\_cluster()}, which can be used to implement this
+spatiotemporal clustering algorithm on satellite hotspot data.
 
-In this function, three different kinds of arguments need to be
-specified. Arguments \texttt{hotspots}, \texttt{lon}, \texttt{lat}, and
-\texttt{obsTime} are used to specify the hotspot data set and its
-relevant columns. Arguments \texttt{activeTime}, \texttt{adjDist},
-\texttt{minPts}, and \texttt{minTime} have already been defined in the
-\protect\hyperlink{algorithm}{Algorithm} section. Besides, arguments
-\texttt{timeUnit} and \texttt{timestep} are used to convert observed
-time to discrete time index.
+This function requires that three categories of arguments are specified:
+\texttt{hotspots}, \texttt{lon}, \texttt{lat}, and \texttt{obsTime} are
+used to specify the hotspot data set and its relevant columns;
+\texttt{activeTime}, \texttt{adjDist}, \texttt{minPts}, and
+\texttt{minTime} are user-defined parameters as defined in the
+\protect\hyperlink{algorithm}{Algorithm} section; and arguments
+\texttt{timeUnit} and \texttt{timestep} slice observed continuous time
+into discrete time intervals.
 
-The following code is an example of the use of
-\texttt{hotspot\_cluster()}. It set the \texttt{activeTime} to be \(24\)
-time indexes, the \texttt{adjDist} to be \(3000\) meters, the
-\texttt{minPts} to be \(4\) hotspots, the \texttt{minTime} to be \(3\)
-time indexes, and \(1\) time index to be \(1\) hour.
+The following code demonstrates the use of \texttt{hotspot\_cluster()}.
+Here we set the time interval to be \(1\) hour with \texttt{timeUnit}
+and \texttt{timeStep} such that \texttt{activeTime} represents \(24\)
+hours and \texttt{minTime} represents \(3\) hours. Parameter
+\texttt{adjDist} is set to be \(3000\) meters and \texttt{minPts} to be
+\(4\) hotspots.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -440,8 +446,8 @@ result <- hotspot_cluster(hotspots = hotspots,
 \end{Sinput}
 \end{Schunk}
 
-The output of this function is a \texttt{spotoroo} object, which is
-actually a \texttt{list} contains a \texttt{data.frame} called
+The output of this function is a \texttt{spotoroo} object, that is a
+\texttt{list} that contains a \texttt{data.frame} called
 \texttt{hotspots}, a \texttt{data.frame} called \texttt{ignition}, and a
 \texttt{list} called \texttt{setting}.
 
@@ -454,9 +460,10 @@ result
 \end{Soutput}
 \end{Schunk}
 
-The \texttt{hotspots} data set contains information of each hotspot
-including the location, the observed time, the time inedex, the
-membership, the distance to the ignition location and the amount of time
+The \texttt{hotspots} data set contains information on each hotspot
+including its location, the time it was observed and index in the series
+of clustered time intervals, its cluster membership assignment, as well
+as distance to its cluster's ignition location and the amount of time
 since ignition.
 
 \begin{Schunk}
@@ -473,11 +480,12 @@ head(result$hotspots, 2)
 \end{Soutput}
 \end{Schunk}
 
-The \texttt{ignition} data set contains information of each cluster
+The \texttt{ignition} data set contains information on each cluster
 including the ignition location, the observed time of ignition, the
-number of hotspots in the cluster and the time of life of the cluster.
-In addition, the coordinate information of the ignition points are the
-centroids of the earliest observed hotspots of each cluster.
+number of hotspots in the cluster and the length of time over which it
+was observed. In addition, the coordinates of each ignition point
+represents the centroid of a cluster's hotspots in the first time
+interval in which the cluster was observed.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -493,8 +501,8 @@ head(result$ignition, 2)
 \end{Soutput}
 \end{Schunk}
 
-The package also provides a brief report of the clustering result in the
-generic function \texttt{summary()}.
+The package also provides a brief report of the clustering results in
+the generic function \texttt{summary()}.
 
 \begin{verbatim}
 summary(result)
@@ -505,14 +513,14 @@ summary(result)
 clusters}\label{extract-a-subset-of-clusters}}
 
 The clustering result obtained from the \texttt{hotspot\_cluster()}
-function is a \texttt{spotoroo} object which is not handful to be used
-in further analysis. To overcome this issue, the package provides a
-function \texttt{extract\_fire()} to convert a \texttt{spotoroo} object
-to a \texttt{data.frame}.
+function is a \texttt{spotoroo} object which, due to its list structure,
+may require conversion for further analysis. Therefore, the package
+provides a function \texttt{extract\_fire()} to convert a
+\texttt{spotoroo} object to a \texttt{data.frame}.
 
-When using this function, if you would like to keep all information from
-the clustering result including noise points, set
-\texttt{noise\ =\ TRUE}.
+To keep all information from the clustering result including noise
+points, set \texttt{noise\ =\ TRUE} within the \texttt{extract\_fire()}
+function.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -520,8 +528,9 @@ all_fires <- extract_fire(result, noise = TRUE)
 \end{Sinput}
 \end{Schunk}
 
-By providing a vector to the argument \texttt{cluster}, the function
-will extract the corresponding clusters from the clustering result.
+If the user provides a vector to the argument \texttt{cluster}, the
+function extracts hotspots in the corresponding clusters from the
+clustering result.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -529,22 +538,24 @@ fire_1_and_2 <- extract_fire(result, cluster = c(1, 2), noise = FALSE)
 \end{Sinput}
 \end{Schunk}
 
+\textit{Did we want to show any results here?}
+
 \hypertarget{visualize-the-clustering-result}{%
 \subsubsection{Visualize the clustering
 result}\label{visualize-the-clustering-result}}
 
-The package provides three methods to visualize the clustering result,
+The package provides three methods to visualize the clustering results,
 which all can be produced by the generic function \texttt{plot()}.
 
-The default plot produced by the function shown in Figure
-\ref{fig:demodefplot} is a scatter plot of the clusters and their
-ignition locations showing the spatial distribution of the fires.
+The default plot produced is shown in Figure \ref{fig:demodefplot}. It
+is a scatter plot of the clusters and their ignition locations that
+demonstrates the spatial distribution of the hotspots in each cluster.
 
-According to the plot, there are total of 6 clusters where 4 of them are
-at the bottom right of the plot and 2 of them are at the top left of the
-plot. They were all observed from December, 2019 to Feburary, 2020 which
-was during the 2019-2020 Australian bushfire season. Furthermore, the
-black dots are the ignition location of each of the cluster.
+According to the plot, there are total of six clusters: four are at the
+bottom right of the plot, and two are at the top left of the plot. The
+black dots represent the ignition location of each cluster. These
+bushfires were observed from December 2019 through Feburary 2020 during
+the 2019-2020 Australian bushfire season.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -563,14 +574,14 @@ plot(result)
 Figure \ref{fig:demomovplot} shows the path of the fire movement, which
 can be produced by setting
 \texttt{type\ =\ \textquotesingle{}mov\textquotesingle{}}. The argument
-\texttt{step} controls the time difference between successive step and
-using small value of \texttt{step} will produce complex path. Moreover,
-the fire movement is computed by the \texttt{get\_fire\_mov()} function.
+\texttt{step} controls the time difference between successive steps, and
+using a small value of \texttt{step} produces a more complex path.
+\textit{Maybe explain why -- make explicit relationship between step and timeInterval.}
+The fire movement is computed by the \texttt{get\_fire\_mov()} function.
 
 In this plot, the triangle is the start point and the circle is the end
-point. It shows that fire 1, 4 and 5 moved toward the south east, fire 2
-and 6 moved toward the north west and fire 3 moved toward the south
-west.
+point. It shows that fire 1, 4 and 5 moved toward southeast, fires 2 and
+6 moved northwest and fire 3 moved southwest.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -590,10 +601,10 @@ Figure \ref{fig:demotimeline} shows the time line of clusters, which can
 be produced by setting
 \texttt{type\ =\ \textquotesingle{}timeline\textquotesingle{}} to study
 the intensity of the bushfire season. In this plot, the green dots are
-hotspots belong to different clusters and the green wave is the density
-plot for all the hotspots. Besides, the orange dots are noise. From this
-plot, we can say that most of the hotspots were observed in the
-mid-January.
+hotspots belonging to different clusters and the green wave is the
+density plot for all the hotspots. The orange dots represent noise. From
+this plot, we can conclude that most of the hotspots were observed in
+mid-January of 2020.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -612,27 +623,27 @@ plot(result, type = "timeline")
 \hypertarget{application}{%
 \subsection{Application}\label{application}}
 
-In this section, an application will be illustrated to show how this
-algorithm can be used to study bushfire ignition.
+In this section, we present an application to illustrate how this
+algorithm may be used to study bushfire ignition.
 
 \hypertarget{data-source}{%
 \subsubsection{Data source}\label{data-source}}
 
-The following illustration will use the wild fire product (produced from
-Himawari-8) supplied by the P-Tree System, Japan Aerospace Exploration
-Agency (JAXA) \citeyearpar{jaxa} as the data source. This wild fire
-product will be referred as the Himawari-8 hotspot data in the rest of
-the paper. It contains records of 1989572 hotspots from October 2019 to
-March 2020 in the full disk of 140 \textdegree east longitude with 0.02
-\textdegree spatial resolution and 10 minutes temporal resolution.
+We use the wild fire product (produced from Himawari-8) supplied by the
+P-Tree System, Japan Aerospace Exploration Agency (JAXA)
+\citeyearpar{jaxa} as the data source. This wild fire product is
+referred to as the Himawari-8 hotspot data in the rest of the paper.
+This data set contains records of 1,989,572 hotspots from October 2019
+to March 2020 in the full disk of 140 \textdegree east longitude with
+0.02 \textdegree spatial resolution and a 10-minute temporal resolution.
 
-The data pre-processing procedure includes selecting hotspots within the
-boundary of Victoria and filtering hotspots with a threshold (irradiance
-over 100 watts per square metre) suggested by landscape ecologist and
-spatial scientist Dr.~Grant Williamson \citeyearpar{hotspots} to reduce
-noise from the background.
+We pre-process the data by selecting hotspots within the boundary of
+Victoria, Australia, and filtering hotspots with a threshold --
+irradiance over 100 watts per square metre -- as suggested by landscape
+ecologist and spatial scientist Dr.~Grant Williamson
+\citeyearpar{hotspots} to reduce noise from the background.
 
-The final hotspot data set contains 75936 observations with ID,
+The final hotspot data set contains 75,936 observations with ID,
 longitude, latitude and observed date as fields. The overall
 distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
 
@@ -652,13 +663,13 @@ distribution of these hotspots is shown in Figure \ref{fig:hotspots}.
 hotspots}\label{clustering-the-himawari-8-hotspots}}
 
 To perform the clustering algorithm on the Himawari-8 hotspot data, we
-first transform the observed time to time index by setting the time
-difference between two successive index to be \(1\) hour. Then, set
-\texttt{activeTime} to be \(24\) time indexes, \texttt{adjDist} to be
-\(3000\) memters, \texttt{minPts} to be \(3\) hotspots and
-\texttt{minTime} to be \(3\) indexes for the algorithm. The choice of
-these parameters will be justified in the section
-\protect\hyperlink{paremeter-tuning}{Paremeter tuning}.
+first transform the observed time to time indices by setting the time
+difference between two successive intervals to be \(1\) hour. Then, the
+algorithm's remaining parameters are defined with an \texttt{activeTime}
+of \(24\) time indices representing \(24\) hours and \texttt{minTime} is
+\(3\) hours; \texttt{adjDist} is \(3000\) meters and \texttt{minPts} is
+\(3\) hotspots. We further discuss parameter selection in section
+\protect\hyperlink{parameter-tuning}{Parameter tuning}.
 
 \begin{verbatim}
 result <- hotspot_cluster(hotspots = him_hotspots,
@@ -673,7 +684,7 @@ result <- hotspot_cluster(hotspots = him_hotspots,
                             timeStep = 1)
 \end{verbatim}
 
-The clustering result shows that 407 bushfires are found from 75936
+The clustering result shows that 407 bushfires are identified from 75936
 hotspots.
 
 \begin{Schunk}
@@ -689,25 +700,25 @@ result
 \subsubsection{Determining the ignition point and time for individual
 fires}\label{determining-the-ignition-point-and-time-for-individual-fires}}
 
-Based on the clustering result, ignition location for each cluster can
-be computed. The strategy is to select the earliest hotspot of a cluster
-as its ignition point. Besides, if there are multiple earliest hotspots
-belong to the same cluster, the centroids of these hotspots are used as
-the ignition locations. According to this method, ignition points over 6
-months can be produced using the following code:
+Based on the clustering results, the ignition location for each cluster
+can be computed. The earliest hotspot of a cluster is defined to be its
+ignition point, unless there are multiple hotspots in the first interval
+the cluster is observed, in which case the centroid of these hotspots is
+recorded as the fire's ignition location. According to this method,
+ignition points over 6 months can be produced using the following code:
 
 \begin{verbatim}
 plot(result, bg = plot_vic_map(), hotspot = FALSE)
 \end{verbatim}
 
 The result is given in Figure \ref{fig:clusteringfinalresults}. From
-this plot, we observe that most of the fires were ignited in the east of
+this plot, we observe that most of the fires ignited in the east of
 Victoria and some fires were ignited in the south west of the Victoria.
-Very few fires started near Melbourne which is located at the middle of
-Victoria.
+Very few fires started near Melbourne, which is located towards the
+middle of Victoria.
 
-We would like to also study the ignition time for individual fires using
-the following code:
+We also study the ignition time for individual fires using the following
+code:
 
 \begin{verbatim}
 plot(result, type = "timeline", mainBreak = "1 month", dateLabel = "%b %d, %y")`. 
@@ -715,8 +726,9 @@ plot(result, type = "timeline", mainBreak = "1 month", dateLabel = "%b %d, %y")`
 
 The result is given in Figure \ref{fig:himtimeline}. As we can see, the
 majority of fires were ignited from mid-December of 2019 to mid-January
-of 2020. Other than that, there is a significant amount of noise found
-in mid-December, which may implies there are some undetected fires.
+of 2020. We note significant noise identified in mid-December, which may
+suggest there are some undetected fires.
+\textit{Due to cloud cover during that time? Or because our algorithm mis-classified them?}
 
 \begin{Schunk}
 \begin{figure}
@@ -762,31 +774,33 @@ Merging data with camp sites, CFA, roads, \ldots{}
 \subsubsection{Effects of parameter
 choices}\label{effects-of-parameter-choices}}
 
-There are two parameters that being introduced in the outline of the
-algorithm, which are \(AdjDist\) and \(ActiveTime\). The optimal choice
-of these two parameters is not known but can be tuned using a
-visualization tool.
+Two key user-defined parameters for the clustering algorithm are
+\(AdjDist\) and \(ActiveTime\). The optimal choice of these two
+parameters is unknown but can be tuned using a visualization tool.
 
 Considering the relationships between \(AdjDist\), \(ActiveTime\) and
-the number of clusters in the clustering result, increase either
-\(AdjDist\) or \(ActiveTime\) will usually reduce the number of
-clusters. However, if there are large gaps between clusters spatially
-and temporally, increase these two parameters will not significantly
-reduce the number of clusters. Given one of the metrics to evaluate the
-goodness of the clustering result is the gap between clusters, the
+the number of clusters in the clustering result, increasing either
+\(AdjDist\) or \(ActiveTime\) usually reduces the number of clusters.
+There is an exception when there are large gaps between clusters
+spatially and temporally \textit{(how would we defined large?)}, in
+which case increasing two parameters does not significantly reduce the
+number of clusters. Given that one of the metrics to evaluate goodness
+of fit of the clustering result is the gap between clusters,
+\textit{(this is the first time we've mentioned cluster evaluation)} the
 optimal choice of \(AdjDist\) and \(ActiveTime\) can be chosen when they
-have minimum impact on the number of clusters. However, under this
-setting, the optimal \(ActiveTime\) and \(AdjDist\) will approach to
-infinitely as the number of clusters approach to 1. Hence, a restriction
-needs to be applied on this optimization. Increase of \(ActiveTime\) and
-\(AdjDist\) will only be allowed when there is a major fall of the
+have minimum impact on the number of clusters. With this methodology,
+the optimal \(ActiveTime\) and \(AdjDist\) approaches infinitey as the
+number of clusters approach to 1, so a restriction needs to be applied
+on this optimization. Increasing of \(ActiveTime\) and \(AdjDist\)
+should therefore only be allowed when there is a major fall in the
 number of clusters. Based on this rule, a visualization tool inspired by
 the scree plot used in the principal component analysis is developed.
-Similar to the scree plot, users need to determine the \(ActiveTime\)
-and \(AdjDist\) to capture most of the decrease of the number of
-clusters. Figure \ref{fig:vis1} and \ref{fig:vis2} show the parameter
-tuning process by using this visualization tool. The final choice of
-\(ActiveTime\) is \(24\) hours and \(AdjDist\) is \(3000\) metres.
+Similar to the scree plot, the user needs to determine the
+\(ActiveTime\) and \(AdjDist\) that captures the greatest decrease in
+the number of clusters. Figure \ref{fig:vis1} and \ref{fig:vis2} show
+the parameter tuning process by using this visualization tool. The final
+choice of \(ActiveTime\) is \(24\) hours and \(AdjDist\) is \(3000\)
+metres.
 
 \begin{Schunk}
 \begin{figure}
@@ -810,8 +824,8 @@ tuning process by using this visualization tool. The final choice of
 \end{figure}
 \end{Schunk}
 
-\hypertarget{paremeter-tuning}{%
-\subsubsection{Paremeter tuning}\label{paremeter-tuning}}
+\hypertarget{parameter-tuning}{%
+\subsubsection{Parameter tuning}\label{parameter-tuning}}
 
 \hypertarget{summary}{%
 \subsection{Summary}\label{summary}}
