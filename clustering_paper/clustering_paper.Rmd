@@ -732,8 +732,13 @@ knitr::include_graphics("figures/clustering_tuning_2.jpeg")
 ```
 
 
-### Paremeter tuning
+### Parameter tuning
 
 ## Summary
+
+## Acknowldgements
+
+This work was made possible through funding by the Australian Centre of Excellence for Mathematical & Statistical Frontiers, which supported Emily's travel. This paper was written in `Rmarkdown` [@rmarkdown_pkg;@rmarkdown;@rmarkdown_cookbook] with `knitr`
+[@knitr_pkg;@knitr]. Plots are produced `ggplot2` [@ggplot2]. 
 
 \bibliography{RJreferences}

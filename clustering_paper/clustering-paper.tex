@@ -657,8 +657,8 @@ difference between two successive index to be \(1\) hour. Then, set
 \texttt{activeTime} to be \(24\) time indexes, \texttt{adjDist} to be
 \(3000\) memters, \texttt{minPts} to be \(3\) hotspots and
 \texttt{minTime} to be \(3\) indexes for the algorithm. The choice of
-these parameters will be justified in the section
-\protect\hyperlink{paremeter-tuning}{Paremeter tuning}.
+these parameters will be justified in the section {[}Paremeter
+tuning{]}.
 
 \begin{verbatim}
 result <- hotspot_cluster(hotspots = him_hotspots,
@@ -810,11 +810,21 @@ tuning process by using this visualization tool. The final choice of
 \end{figure}
 \end{Schunk}
 
-\hypertarget{paremeter-tuning}{%
-\subsubsection{Paremeter tuning}\label{paremeter-tuning}}
+\hypertarget{parameter-tuning}{%
+\subsubsection{Parameter tuning}\label{parameter-tuning}}
 
 \hypertarget{summary}{%
 \subsection{Summary}\label{summary}}
+
+\hypertarget{acknowldgements}{%
+\subsection{Acknowldgements}\label{acknowldgements}}
+
+This work was made possible through funding by the Australian Centre of
+Excellence for Mathematical \& Statistical Frontiers, which supported
+Emily's travel. This paper was written in \texttt{Rmarkdown}
+\citep{rmarkdown_pkg, rmarkdown, rmarkdown_cookbook} with \texttt{knitr}
+\citep{knitr_pkg, knitr}. Plots are produced \texttt{ggplot2}
+\citep{ggplot2}.
 
 \bibliography{RJreferences}
 
