@@ -484,11 +484,20 @@ devtools::install_github("TengMCing/spotoroo")
 ```
 
 
-The following demonstration will assume the package \CRANpkg{spotoroo} has been loaded.
+The following demonstration will assume the package \CRANpkg{spotoroo} and the built-in data set `hotspots` has been loaded.
 
 ```r
 library(spotoroo)
+data(hotspots)
 ```
+
+The built-in data set `hotpsots` is a subset of a larger satellite hotspot data set which will be referred as the Victorian hotspot data. 
+
+The Victorian hotspot data is originated from the wild fire product (produced from Himawari-8 satellite) supplied by the P-Tree System, Japan Aerospace Exploration Agency (JAXA) [-@jaxa]. This wild fire product contains records of 1989572 hotspots from October 2019 to March 2020 in the full disk of 140 \textdegree east longitude with 0.02 \textdegree spatial resolution and 10 minutes temporal resolution. 
+
+To produce the Victorian hotspot data, two pre-processing steps are performed on the wild fire product. These include selecting hotspots within the boundary of Victoria and filtering hotspots with a threshold (irradiance over 100 watts per square metre) suggested by landscape ecologist and spatial scientist Dr. Grant Williamson [-@hotspots] to reduce noise from the background.
+
+The final Victorian hotspot data contains 75936 observations with longitude, latitude and observed date as fields. We further select approximately 1% data which is 1070 observations from it to form the built-in data set. 
 
 ### Performing spatiotemporal cluster analysis
 
@@ -587,15 +596,7 @@ plot(result, type = "timeline")
 
 ## Application  
 
-In this section, an application will be illustrated to show how this algorithm can be used to study empirical satellite hotspots data.
-
-### Data source
-
-The following illustration will use the wild fire product (produced from Himawari-8) supplied by the P-Tree System, Japan Aerospace Exploration Agency (JAXA) [-@jaxa] as the data source. This wild fire product will be referred as the Himawari-8 hotspot data in the rest of the paper. It contains records of 1989572 hotspots from October 2019 to March 2020 in the full disk of 140 \textdegree east longitude with 0.02 \textdegree spatial resolution and 10 minutes temporal resolution.
-
-The data pre-processing procedure includes selecting hotspots within the boundary of Victoria and filtering hotspots with a threshold (irradiance over 100 watts per square metre) suggested by landscape ecologist and spatial scientist Dr. Grant Williamson [-@hotspots] to reduce noise from the background.
-
-The final hotspot data set contains 75936 observations with ID, longitude, latitude and observed date as fields. The overall distribution of these hotspots is given in Figure \ref{fig:hotspots}.
+In this section, an application will be illustrated to show how this algorithm can be used to study empirical satellite hotspots data. The data set we will use is the Victorian hotspot data, which has been mentioned in the [Package] section. The overall distribution of the hotspots is given in Figure \ref{fig:hotspots}.
 
 ```{r}
 if (!file.exists("data/VIC_result.rda")) {
@@ -646,9 +647,9 @@ if (!file.exists("figures/before_clustering.png")){
 knitr::include_graphics("figures/before_clustering.png")
 ```
 
-### Clustering the Himawari-8 hotspots
+### Clustering the Victorian hotspot data
 
-To perform the clustering algorithm on the Himawari-8 hotspot data, we first transform the observed time to time index by setting the time difference between two successive indexes to be $1$ hour. Then, set `activeTime` to be $24$ time indexes, `adjDist` to be $3000$ memters, `minPts` to be $3$ hotspots and `minTime` to be $3$ indexes for the algorithm. The choice of `adjDist` and `activeTime` will be justified in the section [Effects of parameter choices].
+To perform the clustering algorithm on the Victorian hotspot data, we first transform the observed time to time index by setting the time difference between two successive indexes to be $1$ hour. Then, set `activeTime` to be $24$ time indexes, `adjDist` to be $3000$ memters, `minPts` to be $3$ hotspots and `minTime` to be $3$ indexes for the algorithm. The choice of `adjDist` and `activeTime` will be justified in the section [Effects of parameter choices].
 
 ```r
 result <- hotspot_cluster(hotspots = him_hotspots,
