@@ -53,7 +53,7 @@ library(ggforce)
 
 ## Introduction
 
-The 2019-2020 Australia bushfire season was catastrophic in the scale of damage caused to agricultural resources, property, infrastructure, and ecological systems. By the end of 2020, the devastation attributable to these Black Summer fires included 33 lives lost, almost 19 million hectares of land burned, over 3,000 homes destroyed and AUD $1.7 billion in insurance losses, as well as an estimated 1 billion animals killed, including half of Kangaroo Island's population of koalas [@Filkov2020]. According to @climate2020, 2019 was the warmest year on record in Australia and capped off a period from 2013-2019 that represents seven of the nine warmest years. There is concern and expectation that impacts of climate change -- including more extreme temperatures, persistent drought, and changes in plant growth and landscape drying -- will worsen conditions for extreme bushfires [@climate2020, @Deb2020]. Contributing to the problem is that dry lightning represents the main source of natural ignition, and fires that start in remote areas deep in the temperate forests are difficult to access and monitor [@Abram2021]. Therefore, opportunities to detect fire ignitions, monitor bushfire spread, and understand movement patterns in remote areas are important for developing effective strategies to mitigate bushfire impact.
+The 2019-2020 Australia bushfire season was catastrophic in the scale of damage caused to agricultural resources, property, infrastructure, and ecological systems. By the end of 2020, the devastation attributable to these Black Summer fires included 33 lives lost, almost 19 million hectares of land burned, over 3,000 homes destroyed and AUD $1.7 billion in insurance losses, as well as an estimated 1 billion animals killed, including half of Kangaroo Island's population of koalas [@Filkov2020]. According to @climate2020, 2019 was the warmest year on record in Australia and capped off a period from 2013-2019 that represents seven of the nine warmest years. There is concern and expectation that impacts of climate change -- including more extreme temperatures, persistent drought, and changes in plant growth and landscape drying -- will worsen conditions for extreme bushfires [@climate2020; @Deb2020]. Contributing to the problem is that dry lightning represents the main source of natural ignition, and fires that start in remote areas deep in the temperate forests are difficult to access and monitor [@Abram2021]. Therefore, opportunities to detect fire ignitions, monitor bushfire spread, and understand movement patterns in remote areas are important for developing effective strategies to mitigate bushfire impact.
 
 Remote satellite data provides a potential solution to the challenge of active fire detection and monitoring. Development of algorithms that process satellite imagery into hotspots -- pixels that represent likely fires -- is an active area of research (see for example @Giglio2016, @Xu2017, @Wickramasinghe2016, @Jang2019). Detection of bushfire ignition and movement requires the clustering of satellite hotspots into meaningful clusters, which may then be considered in their entirety or summarized by a trajectory. 
 
@@ -94,9 +94,9 @@ Our spatiotemporal clustering algorithm consists of 4 steps, (1) divide hotspots
 
 **1. Divide hotspots into intervals**
 
-One of the characteristics of the hotspot data is cloud cover could lead to missing observations of a bushfire in several hours. As a result, two hotspots observed with a large time difference may preserve direct association. To take this feature into account, an integer parameter $activeTime$ is defined to predetermine the maximum time a fire can stay smouldering but undetectable by satellite before flaring up again.
+One of the characteristics of the hotspot data is cloud cover could lead to missing observations of a bushfire in several hours. As a result, two hotspots observed with a large time difference may preserve direct association. In regards to this feature, an integer parameter $activeTime$ is defined to predetermine the maximum time a fire can stay smouldering but undetectable by satellite before flaring up again. Besides, fire evolution occurs only forwards in time, which suggests that it is inappropriate to cluster hotspots backward. Additionally, due to the nature of the bushfire, earlier hotspots are most likely to be the source of hotspots nearby. Hence, special treatments needs to be applied to the temporal dimension of hotspot data. 
 
-Besides, according to the nature of bushfires, the earlier hotspots are most likely to be the source of the later hotspots nearby. Hence, the temporal dimension of the hotspot data needs to be treated separately. Our method is to define a sequence of intervals in which only spatial relationships remain. In other words, the temporal dimension is dropped completely within any given interval. 
+Our method is to define a sequence of intervals in which only spatial relationships remain. In other words, the temporal dimension is dropped completely within the given interval. 
 
 Let $\boldsymbol{S}_t$ be a sequence of intervals defined by
 
@@ -104,7 +104,7 @@ $$\boldsymbol{S}_t = [max(1,t-activeTime),t]\quad t = 1,2,...,T,$$
 
 where $max(.)$ is the maximum function, $t$ is an integer time index, and $T$ is the integer length of the time frame.
 
-Suppose the data set contains $48$ hours of hotspot data and let $activeTime = 24~hours$, then there will be $48$ intervals defined by the algorithm, $\boldsymbol{S}_1,\boldsymbol{S}_2,\ldots,\boldsymbol{S}_{48}$, where
+Suppose the data set contains $48$ hours of hotspot data. And let $activeTime = 24~hours$, then there will be $48$ intervals defined by the algorithm, $\boldsymbol{S}_1,\boldsymbol{S}_2,\ldots,\boldsymbol{S}_{48}$, where
 
 \begin{align*}
 \boldsymbol{S}_1 &= [1,1],\\
@@ -119,17 +119,17 @@ Suppose the data set contains $48$ hours of hotspot data and let $activeTime = 2
 
 **2. Cluster hotspots spatially**
 
-The next step is to perform clustering on each of the interval. Since temporal dimension is not included, the algorithm only needs to address the the spatial relationship between hotspots. A parameter $adjDist$ is introduced to represent the potential distance a fire can spread with respect to the temporal resolution of the data. For example, given the temporal resolution of the data is $10$-minute, let $AdjDist = 3000 m$, then the potential speed of the bushfire is $3000m/10~min = 18km/h$. 
+The next step is to perform clustering on each interval. Since temporal dimension is not included, the algorithm only needs to address the spatial relationship between hotspots. A parameter $adjDist$ is introduced to represent the potential distance a fire can spread with respect to the temporal resolution of the data. For example, given the temporal resolution of the data is $10$-minute. Let $AdjDist = 3000 m$, then the potential speed of the bushfire is $3000m/10~min = 18km/h$. 
 
-Given $AdjDist>0~m$ and an interval $\boldsymbol{S}_t$, the algorithm will perform the following substeps:
+Given $AdjDist>0~m$ and an interval $\boldsymbol{S}_t$. The algorithm will perform the following substeps:
 
-(a) Append a randomly selected hotspot $h_i$ to a empty list $\boldsymbol{L}$, where $h_i$ is the $i$th hotspot in the interval $\boldsymbol{S}_t$. And let pointer $\boldsymbol{P}$ points to the first element of the list $\boldsymbol{L}$.
+(a) Append a randomly selected hotspot $h_i$ to a empty list $\boldsymbol{L}$, where $h_i$ is the $i$th hotspot in the interval $\boldsymbol{S}_t$. And let point $\boldsymbol{P}$ be the first item of the list $\boldsymbol{L}$.
 
 (b) For every $h_i \notin \boldsymbol{L}$, if $geodesic(h_i, \boldsymbol{P})\leq AdjDist$, append $h_i$ to the list $\boldsymbol{L}$. 
 
-(c) Move pointer $\boldsymbol{P}$ to the next item of the list $\boldsymbol{L}$.
+(c) Let point $\boldsymbol{P}$ be the next item of the list $\boldsymbol{L}$.
 
-(d) Repeat (b) and (c) until the pointer $\boldsymbol{P}$ reaches to the end of the list $\boldsymbol{L}$.
+(d) Repeat (b) and (c) until the point $\boldsymbol{P}$ reaches to the end of the list $\boldsymbol{L}$.
 
 (e) For all hotspots $h_i \in \boldsymbol{L}$, assign a new membership to them. Pop these hotspots from the interval $\boldsymbol{S}_t$. Repeat (a) to (e) until interval $\boldsymbol{S}_t$ is empty.
 
@@ -138,7 +138,7 @@ Given $AdjDist>0~m$ and an interval $\boldsymbol{S}_t$, the algorithm will perfo
 
 Figure \ref{fig:step2figs} gives a concise example of this step.
 
-```{r step2figs, fig.cap="An example of step 2 given 20 hotspots in interval $\\boldsymbol{S}_t$. (a) A hotspot is selected randomly as the first item of list $\\boldsymbol{L}$ and the pointer $\\boldsymbol{P}$. Hotspots in list $\\boldsymbol{L}$ are in red. Pointer $\\boldsymbol{P}$ is drawn with larger marker size. (b) Nearby hotspots of the pointer $\\boldsymbol{P}$ are appended to the list $\\boldsymbol{L}$. (c) Move pointer $\\boldsymbol{P}$ to the next item of list $\\boldsymbol{L}$ and append the nearby hotspots to list $\\boldsymbol{L}$. (d) The cluster is identified via repeating substep (c). (e) Clear the list $\\boldsymbol{L}$, then randomly select an unassigned hotspot to identify another cluster. (f) The final clustering result is produced via repeating substep (d). The labels show the cluster each hotspot belongs to."}
+```{r step2figs, fig.cap="An example of step 2 given 20 hotspots in interval $\\boldsymbol{S}_t$. (a) A hotspot is selected randomly as the first item of list $\\boldsymbol{L}$ and the point $\\boldsymbol{P}$. Hotspots in list $\\boldsymbol{L}$ are in red. Point $\\boldsymbol{P}$ is drawn with larger marker size. (b) Nearby hotspots of the point $\\boldsymbol{P}$ are appended to the list $\\boldsymbol{L}$. (c) Let point $\\boldsymbol{P}$ be the next item of list $\\boldsymbol{L}$ and append the nearby hotspots to list $\\boldsymbol{L}$. (d) The cluster is identified via repeating substep (c). (e) Clear the list $\\boldsymbol{L}$, then randomly select an unassigned hotspot to identify another cluster. (f) The final clustering result is produced via repeating substep (d). The labels show the cluster each hotspot belongs to."}
 
 set.seed(1256)
 x <- rnorm(10, mean = 0, sd = 3)
@@ -306,7 +306,7 @@ library(patchwork)
 
 With spatial clustering results of each interval being produced, the next step is to update the memberships by bringing in information from earlier intervals.
 
-This step starts from $t=2$ till $t=T$. Given the interval $\boldsymbol{S}_t$, the algorithm will perform the following substeps:
+This step starts from $t=2$ till $t=T$. Given the interval $\boldsymbol{S}_t$. The algorithm will perform the following substeps:
 
 (a) For all $h_i$ belongs to $\boldsymbol{S}_{t-1}$, where $h_i$ is the $i$th hotspot in the interval $\boldsymbol{S}_{t}$, let $h_i$ carries over from its membership in $\boldsymbol{S}_{t-1}$. These hotspots are collected by a set $\boldsymbol{H}_s = \{h_s^1,h_s^2,...\}$.
 
@@ -402,7 +402,7 @@ ggplot(data = mutate(points_2, group = rep("", 30))) +
 
 
 
-```{r step3figs, fig.cap = "An example of step 3. In this example, there are 30 hotspots belong to interval $\\boldsymbol{S}_t$. (a) 20 out of 30 hotspots belong to both interval $\\boldsymbol{S}_t$ and interval $\\boldsymbol{S}_{t-1}$. Let these hotspots carry over from their memberships in $\\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\\boldsymbol{S}_t$. (b) For each red point, let it carry over from the membership of the nearest blue label which shares the same component (according to the spatial clustering result of this interval) in interval $\\boldsymbol{S}_t$. "}
+```{r step3figs, fig.cap = "An example of step 3. In this example, there are 30 hotspots belong to interval $\\boldsymbol{S}_t$. (a) 20 out of 30 hotspots belong to both interval $\\boldsymbol{S}_t$ and interval $\\boldsymbol{S}_{t-1}$. Let these hotspots carry over from their memberships in $\\boldsymbol{S}_{t-1}$. They are annotated in blue with membership labels. Points in red are the rest 10 hotspots that only belong to interval $\\boldsymbol{S}_t$. (b) For each red point, let it carry over from the membership of the nearest blue label which shares the same component in interval $\\boldsymbol{S}_t$ (according to the spatial clustering result of this interval). "}
 
 final_labels <- c(point_cols, 4, 2, 4, 4, 2, 2, 2, 4, 4, 2)
 
@@ -495,7 +495,7 @@ The built-in data set `hotpsots` is a subset of a larger satellite hotspot data 
 
 The Victorian hotspot data is originated from the wild fire product (produced from Himawari-8 satellite) supplied by the P-Tree System, Japan Aerospace Exploration Agency (JAXA) [-@jaxa]. This wild fire product contains records of 1989572 hotspots from October 2019 to March 2020 in the full disk of 140 \textdegree east longitude with 0.02 \textdegree spatial resolution and 10 minutes temporal resolution. 
 
-To produce the Victorian hotspot data, two pre-processing steps are performed on the wild fire product. These include selecting hotspots within the boundary of Victoria and filtering hotspots with a threshold (irradiance over 100 watts per square metre) suggested by landscape ecologist and spatial scientist Dr. Grant Williamson [-@hotspots] to reduce noise from the background.
+To produce the Victorian hotspot data, two pre-processing steps are performed on the wild fire product. These include selecting hotspots within the boundary of Victoria and filtering hotspots with a threshold (irradiance over 100 watts per square metre) suggested by a Github gist written by landscape ecologist and spatial scientist Dr. Grant Williamson [-@hotspots] to reduce noise from the background.
 
 The final Victorian hotspot data contains 75936 observations with longitude, latitude and observed date as fields. We further select approximately 1% data which is 1070 observations from it to form the built-in data set. 
 
@@ -505,7 +505,7 @@ The main function of this package is `hotspot_cluster()`, which can be used to p
 
 In this function, three different kinds of arguments need to be specified. Arguments `hotspots`, `lon`, `lat`, and `obsTime` are used to specify the hotspot data set and its relevant columns. Arguments `activeTime`, `adjDist`, `minPts`, and `minTime` have already been defined in the [Algorithm] section. Besides, arguments `timeUnit` and `timestep` are used to convert observed time to integer time index.
 
-The following code is an example of the use of `hotspot_cluster()`. It set the `activeTime` to be $24$ time indexes, the `adjDist` to be $3000$ meters, the `minPts` to be $4$ hotspots, the `minTime` to be $3$ time indexes, and the difference between two adjacent time indexes to be $1$ hour.
+The following code is an example of the use of `hotspot_cluster()`. It sets the `activeTime` to be $24$ time indexes, the `adjDist` to be $3000$ meters, the `minPts` to be $4$ hotspots, the `minTime` to be $3$ time indexes, and the difference between two adjacent time indexes to be $1$ hour.
 
 ```{r echo = TRUE, message = FALSE}
 result <- hotspot_cluster(hotspots = hotspots,
@@ -520,7 +520,7 @@ result <- hotspot_cluster(hotspots = hotspots,
                           timeStep = 1)
 ```
 
-The output of this function is a `spotoroo` object, which is actually a `list` contains two `data.frame`s called `hotspots` and `ignition`, and a `list` called `setting`.
+The output of this function is a `spotoroo` object, which is essentially a `list` containing two `data.frame`s, namely `hotspots` and `ignition`, and a `list` called `setting`.
 
 ```{r echo = TRUE, message=TRUE}
 result
@@ -652,16 +652,16 @@ knitr::include_graphics("figures/before_clustering.png")
 To perform the clustering algorithm on the Victorian hotspot data, we first transform the observed time to time index by setting the time difference between two successive indexes to be $1$ hour. Then, set `activeTime` to be $24$ time indexes, `adjDist` to be $3000$ memters, `minPts` to be $3$ hotspots and `minTime` to be $3$ indexes for the algorithm. The choice of `adjDist` and `activeTime` will be justified in the section [Effects of parameter choices].
 
 ```r
-result <- hotspot_cluster(hotspots = him_hotspots,
-                            lon = "lon",
-                            lat = "lat",
-                            obsTime = "obsTime",
-                            activeTime = 24,
-                            adjDist = 3000,
-                            minPts = 4,
-                            minTime = 3,
-                            timeUnit = "h",
-                            timeStep = 1)
+result <- hotspot_cluster(hotspots = vic_hotspots,
+                          lon = "lon",
+                          lat = "lat",
+                          obsTime = "obsTime",
+                          activeTime = 24,
+                          adjDist = 3000,
+                          minPts = 4,
+                          minTime = 3,
+                          timeUnit = "h",
+                          timeStep = 1)
 ```
 
 
@@ -685,13 +685,13 @@ plot(result, bg = plot_vic_map(), hotspot = FALSE)
 The result is given in Figure \ref{fig:clusteringfinalresults}. From this plot, we observe that most of the fires were ignited in the east of Victoria and some fires were ignited in the south west of the Victoria. These areas are forests and mountains. Very few fires started near the Melbourne city which is located at the middle of Victoria.
 
 
-We would like to also study the ignition time for individual fires using the following code:
+The ignition time for individual fires can be produced by using the following code:
 
 ```r
 plot(result, type = "timeline", mainBreak = "1 month", dateLabel = "%b %d, %y")`. 
 ```
 
-The result is given in Figure \ref{fig:himtimeline}. As we can see, the majority of fires were ignited from mid-December of 2019 to mid-January of 2020. Other than that, there is a significant amount of noise found in mid-December, which may implies there are some undetected fires.
+The result is given in Figure \ref{fig:himtimeline}. The majority of fires were ignited from mid-December of 2019 to mid-January of 2020. Other than that, there is a significant amount of noise found in mid-December, which may implies there are some undetected fires.
 
 
 ```{r clusteringfinalresults, fig.cap=" The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season."}
@@ -720,7 +720,7 @@ plot(result,
      bg = plot_vic_map())
 ```
 
-The result is given in Figure \ref{fig:firemovem}. All of the fires are observed in the late December and the beginning of the January. According to the plot, 3 out of the 4 fires changed their direction at some points. Fire 163 spread toward different directions simultaneously so the centroid of the cluster didn't change much.
+The result is given in Figure \ref{fig:firemovem}. All of the fires are observed in the late December and the beginning of the January. According to the plot, 3 out of the 4 fires changed their direction at some points. Fire 163 spread toward different directions simultaneously so the movement of the centroid of the cluster was limited.
 
 ### Allocating resources for future fire prevention
 
@@ -752,6 +752,14 @@ ggplot(filter(mygrid, adjDist > 2000)) +
 
 
 ## Summary
+
+
+In this paper,
+
+1. literature review, potential issues, or goal of this research
+2. what we propose
+3. what can be done by the algorithm and its potential use
+4. future extension
 
 ## Acknowldgements
 
