@@ -1,5 +1,5 @@
 ---
-title: A clustering algorithm to organize satellite hotspots data for the purpose of tracking bushfires remotely
+title: A clustering algorithm to organize satellite hotspot data for the purpose of tracking bushfires remotely
 author:
   - name: Weihao Li
     affiliation: Monash University
@@ -596,7 +596,7 @@ plot(result, type = "timeline")
 
 ## Application  
 
-In this section, an application will be illustrated to show how this algorithm can be used to study empirical satellite hotspots data. The data set we will use is the Victorian hotspot data, which has been mentioned in the [Package] section. The overall distribution of the hotspots is given in Figure \ref{fig:hotspots}.
+In this section, an application will be illustrated to show the empirical use of the algorithm. The Victorian hotspot data which has been mentioned in the [Package] section will be used. Its overall spatial distribution is shown in Figure \ref{fig:hotspots}.
 
 ```{r}
 if (!file.exists("data/VIC_result.rda")) {
@@ -649,7 +649,8 @@ knitr::include_graphics("figures/before_clustering.png")
 
 ### Clustering the Victorian hotspot data
 
-To perform the clustering algorithm on the Victorian hotspot data, we first transform the observed time to time index by setting the time difference between two successive indexes to be $1$ hour. Then, set `activeTime` to be $24$ time indexes, `adjDist` to be $3000$ memters, `minPts` to be $3$ hotspots and `minTime` to be $3$ indexes for the algorithm. The choice of `adjDist` and `activeTime` will be justified in the section [Effects of parameter choices].
+To perform the clustering algorithm on the Victorian hotspot data, we first transform the observed time to time index by setting the time difference between two successive indexes to $1$ hour. Given the time resolution of the data is $10$-minute, transforming it to $1$-hour will not cause great loss of information, but can significantly shorten the computation time. We then let `activeTime` be $24$ time indexes and `adjDist` be $3000$ memters. These two choices will be justified in detail under the section [Effects of parameter choices]. Finally, set `minPts` to $3$ hotspots and `minTime` to $3$ indexes. In this illustration, we consider cluster that lasts longer than $3$ hours and contains at least $4$ hotspots to be a bushfire. However, these two parameters can be other values since the definition of a bushfire can vary.
+
 
 ```r
 result <- hotspot_cluster(hotspots = vic_hotspots,
@@ -667,7 +668,7 @@ result <- hotspot_cluster(hotspots = vic_hotspots,
 
 
 
-The clustering result shows that 407 bushfires are found from 75936 hotspots.
+The clustering result shows that 407 bushfires are found from 75936 hotspots. Historically, the number of bushfires reported in a year in Victoria are about $200$ to $700$ [@fireorigin]. Thus, it suggests that the number of clusters given by the algorithm is reasonable.
 
 ```{r echo=TRUE,message=TRUE}
 result
@@ -676,22 +677,22 @@ result
 
 ### Determining the ignition point and time for individual fires
 
-Based on the clustering result, ignition location for each cluster can be computed. The strategy is to select the earliest hotspot of a cluster as its ignition point. Besides, if there are multiple earliest hotspots belong to the same cluster, the centroids of these hotspots are used as the ignition locations. According to this method, ignition points over 6 months can be produced using the following code:
+Provided the clustering result, ignition location for each cluster can be computed. The strategy is to select the earliest hotspot of a cluster as its ignition point. Besides, if there are multiple earliest hotspots belong to the same cluster, the centroids of these hotspots are used as the ignition locations. According to this method, ignition points over 6 months can be produced using the following code:
 
 ```r
 plot(result, bg = plot_vic_map(), hotspot = FALSE)
 ```
 
-The result is given in Figure \ref{fig:clusteringfinalresults}. From this plot, we observe that most of the fires were ignited in the east of Victoria and some fires were ignited in the south west of the Victoria. These areas are forests and mountains. Very few fires started near the Melbourne city which is located at the middle of Victoria.
+The result is given in Figure \ref{fig:clusteringfinalresults}. From this plot, we observe that most of the fires were ignited in the east of Victoria and some fires were ignited in the south west of the Victoria. These areas are mostly forests and mountains. Very few fires started near the Melbourne city which is located at the middle of Victoria.
 
 
-The ignition time for individual fires can be produced by using the following code:
+Besides, the ignition time for individual fires can be produced by using the following code:
 
 ```r
 plot(result, type = "timeline", mainBreak = "1 month", dateLabel = "%b %d, %y")`. 
 ```
 
-The result is given in Figure \ref{fig:himtimeline}. The majority of fires were ignited from mid-December of 2019 to mid-January of 2020. Other than that, there is a significant amount of noise found in mid-December, which may implies there are some undetected fires.
+The result is given in Figure \ref{fig:himtimeline}. It shows that the majority of fires were ignited from mid-December of 2019 to mid-January of 2020. Other than that, there is a significant amount of noise found in mid-December, which may implies there are some undetected fires.
 
 
 ```{r clusteringfinalresults, fig.cap=" The distribution of bushfire ignitions in Victoria during 2019-2020 Australian bushfire season."}
@@ -708,8 +709,6 @@ plot(result, type = "timeline", mainBreak = "1 month", dateLabel = "%b %d, %y")
 
 We further study the movement of 4 most intensive fires located in the east of Victoria using the following code:
 
-
-
 ```{r firemovem, echo = TRUE, fig.cap="Movements of 4 most intensive fires observed in Victoria during the 2019-2020 Australian bushfire season."}
 
 plot(result, 
@@ -724,7 +723,7 @@ The result is given in Figure \ref{fig:firemovem}. All of the fires are observed
 
 ### Allocating resources for future fire prevention
 
-Advanced analysis can be performed by merging the clustering result with data like recreation sites, fire stations, roads, weather and vegetation types. We conducted an research [@conart] by this method to predict the causes of bushfires in Victoria during the 2019-2020 bushfire season when the fire investigations had not been done. It yields meaningful suggestions for future fire prevention.
+Advanced analysis can be performed by merging the clustering result with data like recreation sites, fire stations, roads, weather and vegetation types. Then, relationships between these additional data and the attributes of the cluster such as the size, the ignition time and the movement of the centroid can be studied. We have been conducted a research by this method to predict the causes of bushfires in Victoria during the 2019-2020 bushfire season [@conart]. It yields important conclusions of the bushfire season, and gives some meaningful suggestions for future fire prevention.
 
 ### Effects of parameter choices
 
@@ -751,15 +750,15 @@ ggplot(filter(mygrid, adjDist > 2000)) +
 ```
 
 
-## Summary
+## Conclusions
+
+In this paper, we have discussed <previous research>.
+
+The spatiotemporal clustering algorithm proposed in this paper provides an alternative to organize satellite hotspot data for the purpose of tracking bushfires remotely. It can be used to cluster hotspots into bushfires of arbitrary shape and size, while following the basic properties of bushfire dynamic. Meanwhile, the key parameters used in this algorithm can be chosen by a visualization heuristic, which helps calibrating the clustering result. Although we have only presented its application for hotspot data observed in Victoria, Australia, it is generalizable to bushfires in other regions by making the right choice of the parameter values. 
+
+We have provided an implementation of the algorithm in the R package \CRANpkg{spotoroo}. We hope others can build upon this work to make use of satellite hostpot data for bushfire researches, especially bushfire prevention.
 
 
-In this paper,
-
-1. literature review, potential issues, or goal of this research
-2. what we propose
-3. what can be done by the algorithm and its potential use
-4. future extension
 
 ## Acknowldgements
 

@@ -1,6 +1,6 @@
 % !TeX root = RJwrapper.tex
-\title{A clustering algorithm to organize satellite hotspots data for
-the purpose of tracking bushfires remotely}
+\title{A clustering algorithm to organize satellite hotspot data for the
+purpose of tracking bushfires remotely}
 \author{by Weihao Li, Emily Dodwell, and Dianne Cook}
 
 \maketitle
@@ -642,11 +642,10 @@ plot(result, type = "timeline")
 \hypertarget{application}{%
 \subsection{Application}\label{application}}
 
-In this section, an application will be illustrated to show how this
-algorithm can be used to study empirical satellite hotspots data. The
-data set we will use is the Victorian hotspot data, which has been
-mentioned in the \protect\hyperlink{package}{Package} section. The
-overall distribution of the hotspots is given in Figure
+In this section, an application will be illustrated to show the
+empirical use of the algorithm. The Victorian hotspot data which has
+been mentioned in the \protect\hyperlink{package}{Package} section will
+be used. Its overall spatial distribution is shown in Figure
 \ref{fig:hotspots}.
 
 \begin{Schunk}
@@ -666,13 +665,18 @@ data}\label{clustering-the-victorian-hotspot-data}}
 
 To perform the clustering algorithm on the Victorian hotspot data, we
 first transform the observed time to time index by setting the time
-difference between two successive indexes to be \(1\) hour. Then, set
-\texttt{activeTime} to be \(24\) time indexes, \texttt{adjDist} to be
-\(3000\) memters, \texttt{minPts} to be \(3\) hotspots and
-\texttt{minTime} to be \(3\) indexes for the algorithm. The choice of
-\texttt{adjDist} and \texttt{activeTime} will be justified in the
-section \protect\hyperlink{effects-of-parameter-choices}{Effects of
-parameter choices}.
+difference between two successive indexes to \(1\) hour. Given the time
+resolution of the data is \(10\)-minute, transforming it to \(1\)-hour
+will not cause great loss of information, but can significantly shorten
+the computation time. We then let \texttt{activeTime} be \(24\) time
+indexes and \texttt{adjDist} be \(3000\) memters. These two choices will
+be justified in detail under the section
+\protect\hyperlink{effects-of-parameter-choices}{Effects of parameter
+choices}. Finally, set \texttt{minPts} to \(3\) hotspots and
+\texttt{minTime} to \(3\) indexes. In this illustration, we consider
+cluster that lasts longer than \(3\) hours and contains at least \(4\)
+hotspots to be a bushfire. However, these two parameters can be other
+values since the definition of a bushfire can vary.
 
 \begin{verbatim}
 result <- hotspot_cluster(hotspots = vic_hotspots,
@@ -688,7 +692,10 @@ result <- hotspot_cluster(hotspots = vic_hotspots,
 \end{verbatim}
 
 The clustering result shows that 407 bushfires are found from 75936
-hotspots.
+hotspots. Historically, the number of bushfires reported in a year in
+Victoria are about \(200\) to \(700\) \citep{fireorigin}. Thus, it
+suggests that the number of clusters given by the algorithm is
+reasonable.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -703,7 +710,7 @@ result
 \subsubsection{Determining the ignition point and time for individual
 fires}\label{determining-the-ignition-point-and-time-for-individual-fires}}
 
-Based on the clustering result, ignition location for each cluster can
+Provided the clustering result, ignition location for each cluster can
 be computed. The strategy is to select the earliest hotspot of a cluster
 as its ignition point. Besides, if there are multiple earliest hotspots
 belong to the same cluster, the centroids of these hotspots are used as
@@ -717,20 +724,20 @@ plot(result, bg = plot_vic_map(), hotspot = FALSE)
 The result is given in Figure \ref{fig:clusteringfinalresults}. From
 this plot, we observe that most of the fires were ignited in the east of
 Victoria and some fires were ignited in the south west of the Victoria.
-These areas are forests and mountains. Very few fires started near the
-Melbourne city which is located at the middle of Victoria.
+These areas are mostly forests and mountains. Very few fires started
+near the Melbourne city which is located at the middle of Victoria.
 
-The ignition time for individual fires can be produced by using the
-following code:
+Besides, the ignition time for individual fires can be produced by using
+the following code:
 
 \begin{verbatim}
 plot(result, type = "timeline", mainBreak = "1 month", dateLabel = "%b %d, %y")`. 
 \end{verbatim}
 
-The result is given in Figure \ref{fig:himtimeline}. The majority of
-fires were ignited from mid-December of 2019 to mid-January of 2020.
-Other than that, there is a significant amount of noise found in
-mid-December, which may implies there are some undetected fires.
+The result is given in Figure \ref{fig:himtimeline}. It shows that the
+majority of fires were ignited from mid-December of 2019 to mid-January
+of 2020. Other than that, there is a significant amount of noise found
+in mid-December, which may implies there are some undetected fires.
 
 \begin{Schunk}
 \begin{figure}
@@ -791,9 +798,12 @@ prevention}\label{allocating-resources-for-future-fire-prevention}}
 
 Advanced analysis can be performed by merging the clustering result with
 data like recreation sites, fire stations, roads, weather and vegetation
-types. We conducted an research \citep{conart} by this method to predict
-the causes of bushfires in Victoria during the 2019-2020 bushfire season
-when the fire investigations had not been done. It yields meaningful
+types. Then, relationships between these additional data and the
+attributes of the cluster such as the size, the ignition time and the
+movement of the centroid can be studied. We have been conducted a
+research by this method to predict the causes of bushfires in Victoria
+during the 2019-2020 bushfire season \citep{conart}. It yields important
+conclusions of the bushfire season, and gives some meaningful
 suggestions for future fire prevention.
 
 \hypertarget{effects-of-parameter-choices}{%
@@ -845,23 +855,26 @@ and \(AdjDist\) is \(3000\) metres.
 \end{figure}
 \end{Schunk}
 
-\hypertarget{summary}{%
-\subsection{Summary}\label{summary}}
+\hypertarget{conclusions}{%
+\subsection{Conclusions}\label{conclusions}}
 
-In this paper,
+In this paper, we have discussed .
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  literature review, potential issues, or goal of this research
-\item
-  what we propose
-\item
-  what can be done by the algorithm and its potential use
-\item
-  future extension
-\end{enumerate}
+The spatiotemporal clustering algorithm proposed in this paper provides
+an alternative to organize satellite hotspot data for the purpose of
+tracking bushfires remotely. It can be used to cluster hotspots into
+bushfires of arbitrary shape and size, while following the basic
+properties of bushfire dynamic. Meanwhile, the key parameters used in
+this algorithm can be chosen by a visualization heuristic, which helps
+calibrating the clustering result. Although we have only presented its
+application for hotspot data observed in Victoria, Australia, it is
+generalizable to bushfires in other regions by making the right choice
+of the parameter values.
+
+We have provided an implementation of the algorithm in the R package
+\CRANpkg{spotoroo}. We hope others can build upon this work to make use
+of satellite hostpot data for bushfire researches, especially bushfire
+prevention.
 
 \hypertarget{acknowldgements}{%
 \subsection{Acknowldgements}\label{acknowldgements}}
