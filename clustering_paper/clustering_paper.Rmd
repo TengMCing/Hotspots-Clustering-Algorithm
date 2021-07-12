@@ -683,7 +683,7 @@ Provided the clustering result, ignition location for each cluster can be comput
 plot(result, bg = plot_vic_map(), hotspot = FALSE)
 ```
 
-The result is given in Figure \ref{fig:clusteringfinalresults}. From this plot, we observe that most of the fires were ignited in the east of Victoria and some fires were ignited in the south west of the Victoria. These areas are mostly forests and mountains. Very few fires started near the Melbourne city which is located at the middle of Victoria.
+The result is given in Figure \ref{fig:clusteringfinalresults}. From this plot, we observe that most of the fires were ignited in the east of Victoria and some fires were ignited in the south west of the Victoria. These areas are mostly forests and mountains. Very few fires started near the Melbourne city which is located at the middle of Victoria. 
 
 
 Besides, the ignition time for individual fires can be produced by using the following code:
@@ -713,17 +713,15 @@ We further study the movement of 4 most intensive fires located in the east of V
 
 plot(result, 
      type = "mov", 
-     cluster = c(order(result$ignition$obsInCluster, 
-                       decreasing = TRUE)[1:4]), 
+     cluster = order(result$ignition$obsInCluster,
+                     decreasing = TRUE)[1:4], 
      step = 12, 
      bg = plot_vic_map())
 ```
 
 The result is given in Figure \ref{fig:firemovem}. All of the fires are observed in the late December and the beginning of the January. According to the plot, 3 out of the 4 fires changed their direction at some points. Fire 163 spread toward different directions simultaneously so the movement of the centroid of the cluster was limited.
 
-### Allocating resources for future fire prevention
 
-Advanced analysis can be performed by merging the clustering result with data like recreation sites, fire stations, roads, weather and vegetation types. Then, relationships between these additional data and the attributes of the cluster such as the size, the ignition time and the movement of the centroid can be studied. We have been conducted a research by this method to predict the causes of bushfires in Victoria during the 2019-2020 bushfire season [@conart]. It yields important conclusions of the bushfire season, and gives some meaningful suggestions for future fire prevention.
 
 ### Effects of parameter choices
 
@@ -752,18 +750,23 @@ ggplot(filter(mygrid, adjDist > 2000)) +
 
 ## Conclusions
 
-In this paper, we have discussed <previous research>.
+<!-- the algorithm -->
 
-The spatiotemporal clustering algorithm proposed in this paper provides an alternative to organize satellite hotspot data for the purpose of tracking bushfires remotely. It can be used to cluster hotspots into bushfires of arbitrary shape and size, while following the basic properties of bushfire dynamic. Meanwhile, the key parameters used in this algorithm can be chosen by a visualization heuristic, which helps calibrating the clustering result. Although we have only presented its application for hotspot data observed in Victoria, Australia, it is generalizable to bushfires in other regions by making the right choice of the parameter values. 
+In this paper, we have proposed a spatiotemporal clustering algorithm to organize satellite hotpsot data for the purpose of tracking bushfires remotely. This algorithm can be used to cluster hotspots into bushfires of arbitrary shape and size, while following some basic characteristics of bushfire dynamics. Besides, the main parameters of this algorithm can be tuned by a visualization heuristic, which helps calibrating the clustering result. 
 
-We have provided an implementation of the algorithm in the R package \CRANpkg{spotoroo}. We hope others can build upon this work to make use of satellite hostpot data for bushfire researches, especially bushfire prevention.
+<!-- package -->
+<!-- highlight visualization -->
 
+We have provided an implementation of the algorithm in the R package \CRANpkg{spotoroo}, along with three types of visualizations for presenting different aspects of the bushfire data, including the spatial distribution, the movement and the timeline. An illustration has further given to show the empirical use of this package applied on the 2019-2020 Australian bushfire season with a justification of the parameter choice. Critically, information that can not be collected in the typical way such as the ignition point and time for bushfire in the remote area can be accessibly extracted from the hotspot data with the use of the package.
 
+<!-- future use of the package/algorithm -->
+
+Advanced analysis can be performed by merging the clustering result with data like recreation sites, fire stations, roads, weather and vegetation types. We have been conducted a research by this method to predict the causes of bushfires in Victoria during the 2019-2020 bushfire season [@conart]. It yields meaningful suggestions for future fire prevention. We hope others can build upon this work to make use of satellite hostpot data for bushfire researches, especially future bushfire planning and prevention.
 
 ## Acknowldgements
 
 This work was made possible through funding by the Australian Centre of Excellence for Mathematical & Statistical Frontiers, which supported Emily's travel. This paper was written in `Rmarkdown` [@rmarkdown_pkg;@rmarkdown;@rmarkdown_cookbook] with `knitr`
-[@knitr_pkg;@knitr]. Plots are produced `ggplot2` [@ggplot2]. 
+[@knitr_pkg;@knitr]. Plots are produced with `ggplot2` [@ggplot2]. 
 
 
 ```{r}
