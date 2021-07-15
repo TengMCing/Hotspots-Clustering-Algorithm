@@ -18,7 +18,7 @@ author:
     - Econometrics and Business Statistics
     email:  dicook@monash.edu
 abstract: >
-  An abstract of less than 150 words.
+  This paper describes an algorithm implemented in the R package spotoroo to do spatiotemporal clustering. It is motivated by the availability of satellite hotspot data, and the goal to detect ignition and track bushfires. The work was initiated by the catastrophic bushfires in Australia 2019-2020. The algorithm is inspired by two existing spatiotemporal clustering algorithms but makes some enhancements to cluster spatially in conjunction with consecutive time periods. The algorithm is illustrated on example 2019-2020 bushfire data from Victoria, Australia.
 preamble: |
   \newtheorem{defn}{Definition}
 output: rticles::rjournal_article
